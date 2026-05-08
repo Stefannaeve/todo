@@ -1,0 +1,7 @@
+[1] [Important]: Be Smart
+[2] [Important]: Ta deg sammen
+[3] [Regular]: Ta deg sammen
+[4] [Regular]: Ta deg sammen
+[5] [Regular]: Ta deg sammen
+[6] [Regular]: Ta deg sammen
+[7] [Regular]: Ta deg sammen

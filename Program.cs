@@ -11,17 +11,17 @@ class Program
             Environment.Exit(0);
         }
 
-        string Condition = args[0];
+        Condition? condition = args[0].ToCondition();
         MyFile myFile = new MyFile("todo.txt");
         Todo todo = new Todo(myFile);
 
         CheckArguments(todo, args);
 
-        switch (Condition) {
-            case nameof(global::todo.Condition.add):
+        switch (condition) {
+            case Condition.add:
                 todo.add("Be Smart");
                 break;
-            case nameof(global::todo.Condition.delete) :
+            case Condition.delete:
                 Console.WriteLine("Doing Delete");
                 todo.delete();
                 break;

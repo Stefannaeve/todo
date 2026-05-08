@@ -14,7 +14,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="743d2e14-18cc-41ad-b8d0-f08a8cb32bbf" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.todo/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.todo/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MyFile.cs" beforeDir="false" afterPath="$PROJECT_DIR$/MyFile.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Todo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Todo.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -22,7 +23,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="11" />
+    <option name="cachedIndexableFilesCount" value="1" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Settings">
@@ -116,6 +117,7 @@
       <updated>1778259122801</updated>
       <workItem from="1778259125525" duration="9006000" />
       <workItem from="1778273329748" duration="2301000" />
+      <workItem from="1778277653860" duration="408000" />
     </task>
     <task id="LOCAL-00001" summary="Refactor enums and condition handling, and extend argument parsing functionality">
       <option name="closed" value="true" />
@@ -125,7 +127,15 @@
       <option name="project" value="LOCAL" />
       <updated>1778274790528</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Simplify `ConditionExtensions` and update workspace settings">
+      <option name="closed" value="true" />
+      <created>1778277718275</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1778277718275</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -139,7 +149,8 @@
     <MESSAGE value="Refactored condition handling, added argument type extensions, and updated logic in `Program.cs`" />
     <MESSAGE value="Refactor conditions, add argument parsing extensions, and enhance program structure" />
     <MESSAGE value="Refactor enums and condition handling, and extend argument parsing functionality" />
-    <option name="LAST_COMMIT_MESSAGE" value="Refactor enums and condition handling, and extend argument parsing functionality" />
+    <MESSAGE value="Simplify `ConditionExtensions` and update workspace settings" />
+    <option name="LAST_COMMIT_MESSAGE" value="Simplify `ConditionExtensions` and update workspace settings" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

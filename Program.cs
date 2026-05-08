@@ -25,11 +25,11 @@ internal static class Program
                     throw new InvalidOperationException("No arguments");
                 case ArgumentType.Important:
                     Console.WriteLine("Add important classification");
-                    todo.classification = Classification.Important;
+                    todo.Classification = Classification.Important;
                     break;
                 case ArgumentType.All:
                     Console.WriteLine("Add all attribute");
-                    todo.all = true;
+                    todo.All = true;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -39,11 +39,11 @@ internal static class Program
         switch (condition)
         {
             case Condition.Add:
-                todo.add("Be Smart");
+                todo.Add("Be Smart");
                 break;
             case Condition.Delete:
                 Console.WriteLine("Doing Delete");
-                todo.delete();
+                todo.Delete();
                 break;
             case Condition.Unknown:
                 Console.WriteLine($"Doesnt recognize condition {args[0]}");
@@ -51,10 +51,10 @@ internal static class Program
             case Condition.DeleteAll:
                 throw new NotImplementedException("Delete all not implemented");
             default:
-                throw new UnreachableException("Missing condition");
+                throw new ArgumentOutOfRangeException();
         }
 
-        todo.add("Ta deg sammen");
+        todo.Add("Ta deg sammen");
 
     }
 }

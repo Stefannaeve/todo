@@ -1,35 +1,21 @@
-using System.Diagnostics;
-
 namespace todo;
 
+public class Todo(MyFile file)
+{
+    public Classification Classification { get; set; } = Classification.Regular;
 
+    public bool All { get; set; }
 
-public class Todo {
-    
-    private int Count { get; set; }
-    
-    private int index;
-    public Classification classification { get; set; }
-    private string body;
-
-    public bool all { get; set; }
-    
-    private MyFile _file;
-
-    public Todo(MyFile file) {
-        _file = file;
-        classification = Classification.Regular;
-        all = false;
+    public void Add(string body)
+    {
+        file.Append(Classification, body);
     }
 
-    public void add(string body) {
-        _file.Append(classification, body);
-    }
-
-    public void delete() {
-        if (all) {
-            _file.deleteAll();
+    public void Delete()
+    {
+        if (All)
+        {
+            file.DeleteAll();
         }
-
     }
 }

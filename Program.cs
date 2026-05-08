@@ -1,53 +1,60 @@
-﻿namespace todo;
+﻿using System.Diagnostics;
+using todo.Extensions;
 
-class Program
+namespace todo;
+
+internal static class Program
 {
-    static void Main(string[] args)
+    private static void Main(string[] args)
     {
-        Console.WriteLine("Hello world!");
         if (args.Length < 1)
         {
             Console.WriteLine("Args less than one, exiting program");
             Environment.Exit(0);
         }
 
-        Condition? condition = args[0].ToCondition();
-        MyFile myFile = new MyFile("todo.txt");
-        Todo todo = new Todo(myFile);
+        var condition = args[0].ToCondition();
+        var myFile = new MyFile("todo.txt");
+        var todo = new Todo(myFile);
 
-        CheckArguments(todo, args);
-
-        switch (condition) {
-            case Condition.add:
-                todo.add("Be Smart");
-                break;
-            case Condition.delete:
-                Console.WriteLine("Doing Delete");
-                todo.delete();
-                break;
-            default:
-                Console.WriteLine("Doesnt recognize condition");
-                break;
-        }
-
-        todo.add("Ta deg sammen");
-        
-    }
-
-    private static void CheckArguments(Todo todo, string[] args) {
-        foreach (var argument in args) {
-            switch (argument) {
-                case "-i":
+        foreach (var argType in args.GetArgumentType())
+        {
+            switch (argType)
+            {
+                case ArgumentType.None:
+                    throw new InvalidOperationException("No arguments");
+                case ArgumentType.Important:
                     Console.WriteLine("Add important classification");
                     todo.classification = Classification.Important;
                     break;
-                case "-a" :
+                case ArgumentType.All:
                     Console.WriteLine("Add all attribute");
                     todo.all = true;
                     break;
                 default:
-                    break;
+                    throw new ArgumentOutOfRangeException();
             }
         }
+
+        switch (condition)
+        {
+            case Condition.Add:
+                todo.add("Be Smart");
+                break;
+            case Condition.Delete:
+                Console.WriteLine("Doing Delete");
+                todo.delete();
+                break;
+            case Condition.Unknown:
+                Console.WriteLine($"Doesnt recognize condition {args[0]}");
+                break;
+            case Condition.DeleteAll:
+                throw new NotImplementedException("Delete all not implemented");
+            default:
+                throw new UnreachableException("Missing condition");
+        }
+
+        todo.add("Ta deg sammen");
+
     }
 }

@@ -19,9 +19,9 @@ public class MyFile {
     }
 
     public void DeleteAll() {
-        Console.WriteLine($"Filename: {_fileName}");
-        Console.WriteLine($"Full path: {Path.GetFullPath(_fileName)}");
-        Console.WriteLine("DeleteAll");
+        HelperClasses.Message.Debug($"Filename: {_fileName}");
+        HelperClasses.Message.Debug($"Full path: {Path.GetFullPath(_fileName)}");
+        HelperClasses.Message.Debug("DeleteAll");
         File.WriteAllText(_fileName, string.Empty);
     }
 }

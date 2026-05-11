@@ -14,12 +14,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="743d2e14-18cc-41ad-b8d0-f08a8cb32bbf" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Color.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/HelperClasses/Message.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Extensions/ConditionExtensions.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Extensions/ConditionExtensions.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ArgumentType.cs" beforeDir="false" afterPath="$PROJECT_DIR$/ArgumentType.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/HelperClasses/Message.cs" beforeDir="false" afterPath="$PROJECT_DIR$/HelperClasses/Message.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/MyFile.cs" beforeDir="false" afterPath="$PROJECT_DIR$/MyFile.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Program.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/todo.txt" beforeDir="false" afterPath="$PROJECT_DIR$/todo.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -149,7 +147,23 @@
       <option name="project" value="LOCAL" />
       <updated>1778278262788</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Add helper classes for writing debug and info message.">
+      <option name="closed" value="true" />
+      <created>1778493286932</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1778493286932</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Formating">
+      <option name="closed" value="true" />
+      <created>1778493295262</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1778493295262</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -165,7 +179,9 @@
     <MESSAGE value="Refactor enums and condition handling, and extend argument parsing functionality" />
     <MESSAGE value="Simplify `ConditionExtensions` and update workspace settings" />
     <MESSAGE value="Cleaning up" />
-    <option name="LAST_COMMIT_MESSAGE" value="Cleaning up" />
+    <MESSAGE value="Add helper classes for writing debug and info message." />
+    <MESSAGE value="Formating" />
+    <option name="LAST_COMMIT_MESSAGE" value="Formating" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

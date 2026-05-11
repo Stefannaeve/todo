@@ -16,15 +16,21 @@ internal static class Program {
         var todo = new Todo(myFile);
 
         foreach (var argType in args.GetArgumentType()) {
+            if (argType == ArgumentType.Info) {
+                HelperClasses.Message.InfoBool(true);
+            }
+        }
+
+        foreach (var argType in args.GetArgumentType()) {
             switch (argType) {
                 case ArgumentType.None:
                     throw new InvalidOperationException("No arguments");
                 case ArgumentType.Important:
-                    Console.WriteLine("Add important classification");
+                    HelperClasses.Message.ExtraInfo("Add important classification");
                     todo.Classification = Classification.Important;
                     break;
                 case ArgumentType.All:
-                    Console.WriteLine("Add all attribute");
+                    HelperClasses.Message.ExtraInfo("Add all attribute");
                     todo.All = true;
                     break;
                 default:
@@ -37,11 +43,11 @@ internal static class Program {
                 todo.Add("Be Smart");
                 break;
             case Condition.Delete:
-                Console.WriteLine("Doing Delete");
+                HelperClasses.Message.ExtraInfo("Doing Delete");
                 todo.Delete();
                 break;
             case Condition.Unknown:
-                Console.WriteLine($"Doesnt recognize condition {args[0]}");
+                HelperClasses.Message.Info($"Doesnt recognize condition {args[0]}");
                 break;
             case Condition.DeleteAll:
                 throw new NotImplementedException("Delete all not implemented");

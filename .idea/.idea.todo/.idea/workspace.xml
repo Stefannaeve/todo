@@ -14,7 +14,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="743d2e14-18cc-41ad-b8d0-f08a8cb32bbf" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/Color.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/HelperClasses/Message.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Extensions/ConditionExtensions.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Extensions/ConditionExtensions.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/MyFile.cs" beforeDir="false" afterPath="$PROJECT_DIR$/MyFile.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Program.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/todo.txt" beforeDir="false" afterPath="$PROJECT_DIR$/todo.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -42,9 +47,11 @@
 }</component>
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/Classification.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Color.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Condition.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Extensions/ArgumentTypeExtensions.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Extensions/ConditionExtensions.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/HelperClasses/Message.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Program.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Todo.cs" root0="FORCE_HIGHLIGHTING" />
   </component>

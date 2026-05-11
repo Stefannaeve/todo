@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using todo.Extensions;
 using todo.HelperClasses;
@@ -47,27 +48,34 @@ internal static class Program {
 
         switch (condition) {
             case Condition.Add:
-                findArgument(args, todo, true);
-                todo.Add();
-                break;
+                Message.ExtraInfo("Doing Adding");
+                if (TryFindArgument(args, out string? value)) {
+                    todo.body = value;
+                    todo.Add();
+                    break;
+                }
+                throw new UnreachableException("Could not find body in arguments");
+
             case Condition.Delete:
                 Message.ExtraInfo("Doing Delete");
-                findArgument(args, todo, false);
-                todo.Delete();
-                break;
+                if (TryFindArgument(args, out string? deleteValue)) {
+                    if (int.TryParse(deleteValue, out int deleteIndex)) {
+                        todo.number = deleteIndex;
+                        todo.Delete();
+                        break;
+                    }
+                }
+                throw new ArgumentException("Could not parse deleteIndex");
+            
             case Condition.Unknown:
                 Message.Info($"Doesnt recognize condition {args[0]}");
                 break;
-            case Condition.DeleteAll:
-                throw new NotImplementedException("Delete all not implemented");
             default:
                 throw new ArgumentOutOfRangeException();
         }
-
-        //todo.Add("Ta deg sammen");
     }
 
-    public static void findArgument(string[] args, Todo todo, bool findBody) {
+    public static bool TryFindArgument(string[] args, [NotNullWhen(true)] out string? output) {
         for (int i = 0; i < args.Length; i++) {
             string currentArgument = args[i];
             if (i == 0) {
@@ -75,19 +83,12 @@ internal static class Program {
             }
 
             if (currentArgument[0] != '-') {
-                if (findBody) {
-                    todo.body = currentArgument;
-                    break;
-                }
-
-                if (int.TryParse(currentArgument, out var result)) {
-                    todo.number = result;
-                }
-                else {
-                    Message.Info("Could not parse number, shutting down");
-                    Environment.Exit(0);
-                }
+                output = currentArgument;
+                return true;
             }
         }
+
+        output = null;
+        return false;
     }
 }

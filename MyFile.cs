@@ -1,4 +1,7 @@
+using System.Diagnostics;
+using System.Runtime.InteropServices.ComTypes;
 using System.Text;
+using todo.Extensions;
 using todo.HelperClasses;
 
 namespace todo;
@@ -17,35 +20,40 @@ public class MyFile {
 
         _rawLines = File.ReadAllLines(_fileName).ToList();
         foreach (var current in _rawLines) {
-            string[] currentList = current.Split(' ');
+            string[] lineParts = current.Split(':', 2);
+
+            if (lineParts.Length != 2) {
+                throw new UnreachableException($"Unable to parse line \"{current}\" in {_fileName}");
+            }
 
             TodoItem currentTodo = new TodoItem();
 
-            if (currentList[1] == "[Important]:") {
-                currentTodo.Classification = Classification.Important;
-            }
-            else {
-                currentTodo.Classification = Classification.Regular;
-            }
+            currentTodo.Body = lineParts[1].Trim(' ');
 
-            int findThePlacement = 0;
-
-            if (currentList[2] == "[x]:") {
-                currentTodo.Finished = true;
-                findThePlacement = 3;
-            }
-            else {
-                currentTodo.Finished = false;
-                findThePlacement = 4;
+            string[] metaDataParts = lineParts[0].Split(' ', 2);
+            
+            if (metaDataParts.Length != 2) {
+                throw new UnreachableException($"Unable to parse meta data from \"{current}\" in {_fileName}");
             }
 
-            StringBuilder stringBuilder = new StringBuilder(currentList[findThePlacement] + " ");
-
-            for (int i = findThePlacement + 1; i < currentList.Length; i++) {
-                stringBuilder.Append(currentList[i] + " ");
+            Classification classification = metaDataParts[0].ToClassification();
+            
+            if (classification == Classification.Unknown) {
+                throw new UnreachableException($"Unable to parse classification from \"{current} in {_fileName}");
             }
 
-            currentTodo.Body = stringBuilder.ToString();
+            currentTodo.Classification = classification;
+
+            switch (metaDataParts[1]) {
+                case "_":
+                    currentTodo.Finished = false;
+                    break;
+                case "x":
+                    currentTodo.Finished = true;
+                    break;
+                default:
+                    throw new UnreachableException($"Unable to parse status from \"{current} in {_fileName}");
+            }
 
             _todoItems.Add(currentTodo);
         }
@@ -96,10 +104,10 @@ public class MyFile {
             TodoItem current = _todoItems[i];
             string finishedString = "x";
             if (!current.Finished) {
-                finishedString = " ";
+                finishedString = "_";
             }
 
-            _rawLines.Add($"[{i + 1}]: [{current.Classification}]: [{finishedString}]: {current.Body}");
+            _rawLines.Add($"{current.Classification} {finishedString}: {current.Body}");
             File.WriteAllLines(_fileName, _rawLines);
         }
     }

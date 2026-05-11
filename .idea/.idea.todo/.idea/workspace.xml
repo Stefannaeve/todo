@@ -14,11 +14,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="743d2e14-18cc-41ad-b8d0-f08a8cb32bbf" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.todo/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.todo/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Extensions/ClassificationExtenstion.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Classification.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Classification.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Condition.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Condition.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/MyFile.cs" beforeDir="false" afterPath="$PROJECT_DIR$/MyFile.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Program.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Todo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Todo.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/todo.sln.DotSettings.user" beforeDir="false" afterPath="$PROJECT_DIR$/todo.sln.DotSettings.user" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/todo.txt" beforeDir="false" afterPath="$PROJECT_DIR$/todo.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -49,10 +49,6 @@
   }
 }</component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/3beb7a94a8ff7b4949141fa8934167c346c47b776a6b25426ba4fc34aae3/Array.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/5c21b9149ef32e1f68396d6e6fc7311324c9829ed40328c33f6d5f859a757/ThrowHelper.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/d5ba88ebe2bb5ca92db126c99f92cd49a036f1dc1b84c3528fc6c9d44b1cc3e/SafeFileHandle.Unix.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/d89db8ba139ab64c219597718f9496bc9238fbbb16b5bd2e907f3226202bbe/File.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Classification.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Color.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Condition.cs" root0="FORCE_HIGHLIGHTING" />
@@ -95,14 +91,14 @@
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.sourceCode.C#",
+    "settings.editor.selected.configurable": "editor.preferences.completion.inline",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
   <component name="RunManager">
     <configuration name="todo" type="DotNetProject" factoryName=".NET Project">
-      <option name="EXE_PATH" value="$PROJECT_DIR$/bin/Debug/net10.0/todo" />
-      <option name="PROGRAM_PARAMETERS" value="add &quot;Something real nice&quot;" />
+      <option name="EXE_PATH" value="$PROJECT_DIR$/bin/Debug/net10.0/todo.exe" />
+      <option name="PROGRAM_PARAMETERS" value="add -i &quot;mitt navn er&quot;" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/bin/Debug/net10.0" />
       <option name="PASS_PARENT_ENVS" value="1" />
       <option name="ENV_FILE_PATHS" value="" />
@@ -133,6 +129,7 @@
       <workItem from="1778273329748" duration="2301000" />
       <workItem from="1778277653860" duration="809000" />
       <workItem from="1778504641382" duration="1431000" />
+      <workItem from="1778526365759" duration="4159000" />
     </task>
     <task id="LOCAL-00001" summary="Refactor enums and condition handling, and extend argument parsing functionality">
       <option name="closed" value="true" />
@@ -229,26 +226,13 @@
         </breakpoint>
         <line-breakpoint enabled="true" type="DotNet Breakpoints">
           <url>file://$PROJECT_DIR$/MyFile.cs</url>
-          <line>41</line>
+          <line>22</line>
           <properties documentPath="$PROJECT_DIR$/MyFile.cs" containingFunctionPresentation="Constructor 'MyFile'">
             <startOffsets>
-              <option value="1139" />
+              <option value="589" />
             </startOffsets>
             <endOffsets>
-              <option value="1224" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="12" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/MyFile.cs</url>
-          <line>19</line>
-          <properties documentPath="$PROJECT_DIR$/MyFile.cs" containingFunctionPresentation="Constructor 'MyFile'">
-            <startOffsets>
-              <option value="493" />
-            </startOffsets>
-            <endOffsets>
-              <option value="535" />
+              <option value="632" />
             </endOffsets>
           </properties>
           <option name="timeStamp" value="13" />

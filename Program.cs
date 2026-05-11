@@ -10,16 +10,23 @@ internal static class Program {
             Environment.Exit(0);
         }
 
+        // I have ExtraInfo things in the next for loop, thats why im doint
+        // a extra one here. 2n is not that bad, fuck off
+        foreach (var argType in args.GetArgumentType()) {
+            switch (argType) {
+                case ArgumentType.Info:
+                    HelperClasses.Message.InfoBool(true);
+                    break;
+                case ArgumentType.Verbose:
+                    HelperClasses.Message.VerboseBool(true);
+                    break;
+            }
+        }
+
         var condition = args[0].ToCondition();
         HelperClasses.Message.Debug(condition.ToString());
         var myFile = new MyFile("todo.txt");
         var todo = new Todo(myFile);
-
-        foreach (var argType in args.GetArgumentType()) {
-            if (argType == ArgumentType.Info) {
-                HelperClasses.Message.InfoBool(true);
-            }
-        }
 
         foreach (var argType in args.GetArgumentType()) {
             switch (argType) {
@@ -32,6 +39,10 @@ internal static class Program {
                 case ArgumentType.All:
                     HelperClasses.Message.ExtraInfo("Add all attribute");
                     todo.All = true;
+                    break;
+                case ArgumentType.Info:
+                    break;
+                case ArgumentType.Verbose:
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();

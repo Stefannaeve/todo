@@ -1,3 +1,2 @@
-[1] [Important] Be Smart
-[2] [Important] Be Smart
-[3] [Important] Be Smart
+[1]: [Regular]: [x]: ]: something real      
+[2]: [Regular]: [ ]: Seems to be working  

@@ -2,7 +2,8 @@ namespace todo;
 
 public enum Condition
 {
-    add,
-    delete,
-    deleteAll
+    Unknown = 1,
+    Add,
+    Delete,
+    DeleteAll
 }

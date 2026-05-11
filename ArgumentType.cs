@@ -1,7 +1,6 @@
 namespace todo;
 
-public enum ArgumentType
-{
+public enum ArgumentType {
     None = 1,
     Important,
     All

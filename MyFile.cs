@@ -1,6 +1,4 @@
 using System.Diagnostics;
-using System.Runtime.InteropServices.ComTypes;
-using System.Text;
 using todo.Extensions;
 using todo.HelperClasses;
 
@@ -19,44 +17,39 @@ public class MyFile {
         }
 
         _rawLines = File.ReadAllLines(_fileName).ToList();
-        foreach (var current in _rawLines) {
-            string[] lineParts = current.Split(':', 2);
-
-            if (lineParts.Length != 2) {
-                throw new UnreachableException($"Unable to parse line \"{current}\" in {_fileName}");
-            }
-
-            TodoItem currentTodo = new TodoItem();
-
-            currentTodo.Body = lineParts[1].Trim(' ');
-
-            string[] metaDataParts = lineParts[0].Split(' ', 2);
-            
-            if (metaDataParts.Length != 2) {
-                throw new UnreachableException($"Unable to parse meta data from \"{current}\" in {_fileName}");
-            }
-
-            Classification classification = metaDataParts[0].ToClassification();
-            
-            if (classification == Classification.Unknown) {
-                throw new UnreachableException($"Unable to parse classification from \"{current} in {_fileName}");
-            }
-
-            currentTodo.Classification = classification;
-
-            switch (metaDataParts[1]) {
-                case "_":
-                    currentTodo.Finished = false;
-                    break;
-                case "x":
-                    currentTodo.Finished = true;
-                    break;
-                default:
-                    throw new UnreachableException($"Unable to parse status from \"{current} in {_fileName}");
-            }
-
-            _todoItems.Add(currentTodo);
+        foreach (var line in _rawLines) {
+            _todoItems.Add(ParseLine(line));
         }
+    }
+
+    private TodoItem ParseLine(string line) {
+        void Fail(string part) =>
+            throw new UnreachableException($"Unable to parse {part} from \"{line}\" in {_fileName}");
+
+        string[] parts = line.Split(':', 2);
+        if (parts.Length != 2) {
+            Fail("line");
+        }
+
+        string[] meta = parts[0].Split(' ', 2);
+        if (meta.Length != 2) {
+            Fail("meta data");
+        }
+
+        var classification = meta[0].ToClassification();
+        if (classification == Classification.Unknown) {
+            Fail("classification"); 
+        }
+
+        return new TodoItem {
+            Body = parts[1].Trim(),
+            Classification = classification,
+            Finished = meta[1] switch {
+                "_" => false,
+                "x" => true,
+                _ => throw new UnreachableException($"Unable to parse status from \"{line}\" in {_fileName}")
+            }
+        };
     }
 
     public void Append(Classification classification, string body) {

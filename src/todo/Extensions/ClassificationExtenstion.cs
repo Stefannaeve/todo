@@ -1,8 +1,10 @@
 ﻿namespace todo.Extensions;
 
 public static class ClassificationExtenstion {
-    extension(string s) {
+    
+    // ReadOnlySpan<char> e basically en pointer te starten av string 
+    extension(ReadOnlySpan<char> span) {
         public Classification ToClassification() =>
-            Enum.TryParse(s, out Classification classification) ? classification : Classification.Unknown;
+            Enum.TryParse(span, ignoreCase: true, out Classification classification) ? classification : Classification.Unknown;
     }
 }

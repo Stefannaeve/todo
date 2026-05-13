@@ -11,7 +11,7 @@ public class MyFile(string fileName) {
             File.Create(fileName);
         }
 
-        _todoItems = ParseTodoItemFromLine(File.ReadAllLines(fileName).ToList());
+        _todoItems = Parser.ParseLines(File.ReadAllLines(fileName)).ToList();
     }
 
     public List<TodoItem> ParseTodoItemFromLine(List<string> rawLines) {

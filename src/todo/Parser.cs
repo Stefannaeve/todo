@@ -12,48 +12,48 @@ public static class Parser {
     }
 
     public static TodoItem ParseLine(ReadOnlySpan<char> line) {
-        SpanSplitEnumerator<char> lineSpan = line.Split(':');
-        if (!lineSpan.MoveNext()) {
+        SpanSplitEnumerator<char> lineSpanEnumerator = line.Split(':');
+        if (!lineSpanEnumerator.MoveNext()) {
             throw new InvalidOperationException($"Unable to parse line : \"{line}\"");
         }
 
         TodoItem currentTodo = new();
-        ReadOnlySpan<char> metaDataSpan = line[lineSpan.Current];
+        ReadOnlySpan<char> metaDataSpan = line[lineSpanEnumerator.Current];
 
         (Classification classification, bool finished) = ParseMetaData(line, metaDataSpan);
 
         currentTodo.Classification = classification;
         currentTodo.Finished = finished;
 
-        if (!lineSpan.MoveNext()) {
+        if (!lineSpanEnumerator.MoveNext()) {
             throw new InvalidOperationException($"Missing body : \"{line}\"");
         }
-        currentTodo.Body = line[lineSpan.Current.Start..].Trim().ToString();
+        currentTodo.Body = line[lineSpanEnumerator.Current.Start..].Trim().ToString();
 
         return currentTodo;
     }
     private static (Classification classification, bool finished) ParseMetaData(ReadOnlySpan<char> line, ReadOnlySpan<char> metaDataSpan) {
-        SpanSplitEnumerator<char> metadataPartsSpan = metaDataSpan.Split(' ');
+        SpanSplitEnumerator<char> metadataPartsSpanEnumerator = metaDataSpan.Split(' ');
 
-        if (!metadataPartsSpan.MoveNext()) {
+        if (!metadataPartsSpanEnumerator.MoveNext()) {
             throw new InvalidOperationException($"Unable to parse line : \"{line}\"");
         }
 
-        if (!Enum.TryParse(metaDataSpan[metadataPartsSpan.Current], ignoreCase: true, out Classification classification)) {
+        if (!Enum.TryParse(metaDataSpan[metadataPartsSpanEnumerator.Current], ignoreCase: true, out Classification classification)) {
             throw new InvalidOperationException($"Unable to parse classification from \"{line}\"");
         }
 
-        if (!metadataPartsSpan.MoveNext()) {
+        if (!metadataPartsSpanEnumerator.MoveNext()) {
             throw new InvalidOperationException($"Unable to parse line : \"{line}\"");
         }
 
-        bool finished = metaDataSpan[metadataPartsSpan.Current] switch {
+        bool finished = metaDataSpan[metadataPartsSpanEnumerator.Current] switch {
             "_" => false,
             "x" => true,
             _ => throw new InvalidOperationException($"Unable to parse status from \"{line}\"")
         };
 
-        if (metadataPartsSpan.MoveNext()) {
+        if (metadataPartsSpanEnumerator.MoveNext()) {
             throw new InvalidOperationException($"Metadata parts too long : \"{line}\"");
         }
 

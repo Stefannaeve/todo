@@ -7,17 +7,15 @@ namespace todo;
 public class MyFile(string fileName)
 {
     private List<TodoItem> _todoItems = [];
-
-    public void ParseFile()
-    {
+    public void ParseFile() {
         if (!File.Exists(fileName)) {
             File.Create(fileName);
         }
 
         _todoItems = ParseTodoItemFromLine(File.ReadAllLines(fileName).ToList());
     }
-    public List<TodoItem> ParseTodoItemFromLine(List<string> rawLines)
-    {
+
+    public List<TodoItem> ParseTodoItemFromLine(List<string> rawLines) {
         List<TodoItem> todoItems = [];
         foreach (var current in rawLines) {
             string[] lineParts = current.Split(':', 2);

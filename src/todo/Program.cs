@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using todo.Extensions;
 using todo.HelperClasses;
 
@@ -15,7 +14,7 @@ internal static class Program {
 
         // I have ExtraInfo things in the next for loop, thats why im doint
         // a extra one here. 2n is not that bad, fuck off
-        foreach (var argType in args.GetArgumentType()) {
+        foreach (ArgumentType argType in args.GetArgumentType()) {
             switch (argType) {
                 case ArgumentType.Info:
                     Message.InfoBool(true);
@@ -26,13 +25,13 @@ internal static class Program {
             }
         }
 
-        var condition = args[0].ToCondition();
+        Condition condition = args[0].ToCondition();
         Message.Debug(condition.ToString());
-        var myFile = new MyFile("todo.txt");
+        MyFile myFile = new MyFile("todo.txt");
         myFile.ParseFile();
-        var todo = new Todo(myFile);
+        Todo todo = new Todo(myFile);
 
-        foreach (var argType in args.GetArgumentType()) {
+        foreach (ArgumentType argType in args.GetArgumentType()) {
             switch (argType) {
                 case ArgumentType.None:
                     throw new InvalidOperationException("No arguments");

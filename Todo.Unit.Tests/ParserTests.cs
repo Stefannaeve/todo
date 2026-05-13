@@ -5,9 +5,8 @@ namespace Todo.Unit.Tests;
 public class ParserTests
 {
     [Fact]
-    public void BasicParserTest()
-    {
-        var myFile = new MyFile("test.txt");
+    public void BasicParserTest() {
+        MyFile myFile = new MyFile("test.txt");
 
         List<string> strings =
         [
@@ -16,7 +15,7 @@ public class ParserTests
         ];
 
 
-        var output = myFile.ParseTodoItemFromLine(strings);
+        List<TodoItem> output = myFile.ParseTodoItemFromLine(strings);
 
         Assert.Equal(2, output.Count);
         Assert.Equal(1, output.Count(todoItem => !todoItem.Finished));

@@ -1,29 +1,29 @@
 using System.Diagnostics;
-using System.Runtime.InteropServices.ComTypes;
-using System.Text;
 using todo.Extensions;
 using todo.HelperClasses;
 
 namespace todo;
 
-public class MyFile {
-    private readonly string _fileName;
-    private List<string> _rawLines;
+public class MyFile(string fileName)
+{
+    private List<TodoItem> _todoItems = [];
 
-    private List<TodoItem> _todoItems = new List<TodoItem>();
-
-    public MyFile(string fileName) {
-        _fileName = fileName;
-        if (!File.Exists(_fileName)) {
-            File.Create(_fileName);
+    public void ParseFile()
+    {
+        if (!File.Exists(fileName)) {
+            File.Create(fileName);
         }
 
-        _rawLines = File.ReadAllLines(_fileName).ToList();
-        foreach (var current in _rawLines) {
+        _todoItems = ParseTodoItemFromLine(File.ReadAllLines(fileName).ToList());
+    }
+    public List<TodoItem> ParseTodoItemFromLine(List<string> rawLines)
+    {
+        List<TodoItem> todoItems = [];
+        foreach (var current in rawLines) {
             string[] lineParts = current.Split(':', 2);
 
             if (lineParts.Length != 2) {
-                throw new UnreachableException($"Unable to parse line \"{current}\" in {_fileName}");
+                throw new UnreachableException($"Unable to parse line \"{current}\" in {fileName}");
             }
 
             TodoItem currentTodo = new TodoItem();
@@ -33,13 +33,13 @@ public class MyFile {
             string[] metaDataParts = lineParts[0].Split(' ', 2);
             
             if (metaDataParts.Length != 2) {
-                throw new UnreachableException($"Unable to parse meta data from \"{current}\" in {_fileName}");
+                throw new UnreachableException($"Unable to parse meta data from \"{current}\" in {fileName}");
             }
 
             Classification classification = metaDataParts[0].ToClassification();
             
             if (classification == Classification.Unknown) {
-                throw new UnreachableException($"Unable to parse classification from \"{current} in {_fileName}");
+                throw new UnreachableException($"Unable to parse classification from \"{current} in {fileName}");
             }
 
             currentTodo.Classification = classification;
@@ -52,11 +52,13 @@ public class MyFile {
                     currentTodo.Finished = true;
                     break;
                 default:
-                    throw new UnreachableException($"Unable to parse status from \"{current} in {_fileName}");
+                    throw new UnreachableException($"Unable to parse status from \"{current} in {fileName}");
             }
 
-            _todoItems.Add(currentTodo);
+            todoItems.Add(currentTodo);
         }
+        
+        return todoItems;
     }
 
     public void Append(Classification classification, string body) {
@@ -71,7 +73,7 @@ public class MyFile {
     }
 
     public void UpdateFinished(int index, bool finished) {
-        if (index < 1 || index - 1 > _rawLines.Count) {
+        if (index < 1 || index - 1 > _todoItems.Count) {
             Message.Info("Could not find the right index, shutting down");
             Environment.Exit(0);
         }
@@ -82,7 +84,7 @@ public class MyFile {
     }
 
     public void Delete(int index) {
-        if (index < 1 || index - 1 > _rawLines.Count) {
+        if (index < 1 || index - 1 > _todoItems.Count) {
             Message.Info("Could not find the right index, shutting down");
             Environment.Exit(0);
         }
@@ -92,23 +94,24 @@ public class MyFile {
     }
 
     public void DeleteAll() {
-        Message.Debug($"Filename: {_fileName}");
-        Message.Debug($"Full path: {Path.GetFullPath(_fileName)}");
+        Message.Debug($"Filename: {fileName}");
+        Message.Debug($"Full path: {Path.GetFullPath(fileName)}");
         Message.Debug("DeleteAll");
-        File.WriteAllText(_fileName, string.Empty);
+        File.WriteAllText(fileName, string.Empty);
     }
 
-    public void WriteTodosToFile() {
-        _rawLines.Clear();
-        for (int i = 0; i < _todoItems.Count; i++) {
-            TodoItem current = _todoItems[i];
+    public void WriteTodosToFile()
+    {
+        List<string> rawLines = [];
+        foreach (var current in _todoItems)
+        {
             string finishedString = "x";
             if (!current.Finished) {
                 finishedString = "_";
             }
 
-            _rawLines.Add($"{current.Classification} {finishedString}: {current.Body}");
-            File.WriteAllLines(_fileName, _rawLines);
+            rawLines.Add($"{current.Classification} {finishedString}: {current.Body}");
+            File.WriteAllLines(fileName, rawLines);
         }
     }
 }

@@ -29,6 +29,7 @@ internal static class Program {
         var condition = args[0].ToCondition();
         Message.Debug(condition.ToString());
         var myFile = new MyFile("todo.txt");
+        myFile.ParseFile();
         var todo = new Todo(myFile);
 
         foreach (var argType in args.GetArgumentType()) {

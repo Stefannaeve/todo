@@ -3,7 +3,6 @@ namespace todo;
 public class Todo(MyFile file) {
     public Classification Classification { get; set; } = Classification.Regular;
     public string body { get; set; } = "";
-    public int number { get; set; } = 0;
 
     public bool All { get; set; }
 
@@ -11,11 +10,14 @@ public class Todo(MyFile file) {
         file.Append(Classification, body);
     }
 
-    public void Delete() {
-        if (All) {
-            file.DeleteAll();
-            Environment.Exit(0);
-        }
-        file.Delete(number);
+    public void DeleteAll() {
+        file.DeleteAll();
+    }
+
+    public bool Delete(int index) {
+        return file.Delete(index);
+    }
+    public bool Finish(int doneIndex) {
+        return file.Finish(doneIndex);
     }
 }

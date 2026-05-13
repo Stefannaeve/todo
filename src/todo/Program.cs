@@ -58,21 +58,32 @@ internal static class Program {
 
             case Condition.Delete:
                 Message.ExtraInfo("Doing Delete");
-                if (TryFindArgument(args, out string? deleteValue)) {
-                    if (int.TryParse(deleteValue, out int deleteIndex)) {
-                        todo.number = deleteIndex;
-                        todo.Delete();
-                        break;
-                    }
+                if (!TryFindArgument(args, out string? deleteValue) || !int.TryParse(deleteValue, out int deleteIndex)) {
+                    throw new ArgumentException("Could not parse deleteIndex");
                 }
-                throw new ArgumentException("Could not parse deleteIndex");
-            
+
+                if (!todo.Delete(deleteIndex)) {
+                    Message.Info($"Could not delete {deleteIndex}");
+                }
+                break;
+
+            case Condition.Done: {
+                if (!TryFindArgument(args, out string? doneValue) || !int.TryParse(doneValue, out int doneIndex)) {
+                    throw new ArgumentException("Could not parse doneIndex");
+                }
+
+                if (!todo.Finish(doneIndex)) {
+                    Message.Info($"Could not finish {doneIndex}");
+                }
+                break;
+            }
             case Condition.Unknown:
                 Message.Info($"Doesnt recognize condition {args[0]}");
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
+        myFile.Save();
     }
 
     public static bool TryFindArgument(string[] args, [NotNullWhen(true)] out string? output) {

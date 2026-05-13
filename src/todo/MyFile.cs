@@ -98,8 +98,7 @@ public class MyFile(string fileName)
         File.WriteAllText(fileName, string.Empty);
     }
 
-    public void WriteTodosToFile()
-    {
+    public void WriteTodosToFile() {
         List<string> rawLines = [];
         foreach (var current in _todoItems)
         {

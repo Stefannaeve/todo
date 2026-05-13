@@ -99,8 +99,7 @@ public class MyFile(string fileName) {
 
     public void WriteTodosToFile() {
         List<string> rawLines = [];
-        foreach (var current in _todoItems)
-        {
+        foreach (var current in _todoItems) {
             string finishedString = "x";
             if (!current.Finished) {
                 finishedString = "_";

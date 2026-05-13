@@ -1,16 +1,8 @@
 namespace todo.HelperClasses;
 
 public class Message {
-    private static bool InfoEnabled = false;
-    private static bool VerboseEnabled = false;
-
-    public static void InfoBool(bool enabled) {
-        InfoEnabled = enabled;
-    }
-
-    public static void VerboseBool(bool enabled) {
-        VerboseEnabled = enabled;
-    }
+    public static bool InfoEnabled { get; set; } = false;
+    public static bool VerboseEnabled { get; set; }= false;
 
     public static void Info(string format, params object[] args) {
         MessagePrint("INFO", Color.Blue, format, args);

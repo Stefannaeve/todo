@@ -2,8 +2,7 @@
 
 namespace Todo.Unit.Tests;
 
-public class ParserTests
-{
+public class ParserTests {
     [Fact]
     public void BasicParserTest() {
         MyFile myFile = new MyFile("test.txt");

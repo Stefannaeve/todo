@@ -5,5 +5,4 @@
   <Folder Name="/test/">
     <Project Path="Todo.Unit.Tests/Todo.Unit.Tests.csproj" />
   </Folder>
-  
 </Solution>

@@ -4,8 +4,7 @@ using todo.HelperClasses;
 
 namespace todo;
 
-public class MyFile(string fileName)
-{
+public class MyFile(string fileName) {
     private List<TodoItem> _todoItems = [];
     public void ParseFile() {
         if (!File.Exists(fileName)) {

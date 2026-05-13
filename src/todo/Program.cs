@@ -30,6 +30,7 @@ internal static class Program {
         MyFile myFile = new MyFile("todo.txt");
         myFile.ParseFile();
         Todo todo = new Todo(myFile);
+        bool all = false;
 
         foreach (ArgumentType argType in args.GetArgumentType()) {
             switch (argType) {
@@ -41,7 +42,7 @@ internal static class Program {
                     break;
                 case ArgumentType.All:
                     Message.ExtraInfo("Add all attribute");
-                    todo.All = true;
+                    all = true;
                     break;
             }
         }
@@ -57,6 +58,11 @@ internal static class Program {
                 throw new UnreachableException("Could not find body in arguments");
 
             case Condition.Delete:
+                if (all) {
+                    Console.WriteLine("Hwllol");
+                    myFile.DeleteAll();
+                    break;
+                }
                 Message.ExtraInfo("Doing Delete");
                 if (!TryFindArgument(args, out string? deleteValue) || !int.TryParse(deleteValue, out int deleteIndex)) {
                     throw new ArgumentException("Could not parse deleteIndex");

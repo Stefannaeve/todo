@@ -16,7 +16,7 @@ public class MyFile(string fileName) {
 
     public List<TodoItem> ParseTodoItemFromLine(List<string> rawLines) {
         List<TodoItem> todoItems = [];
-        foreach (var current in rawLines) {
+        foreach (string current in rawLines) {
             string[] lineParts = current.Split(':', 2);
 
             if (lineParts.Length != 2) {
@@ -99,7 +99,7 @@ public class MyFile(string fileName) {
 
     public void WriteTodosToFile() {
         List<string> rawLines = [];
-        foreach (var current in _todoItems) {
+        foreach (TodoItem current in _todoItems) {
             string finishedString = "x";
             if (!current.Finished) {
                 finishedString = "_";

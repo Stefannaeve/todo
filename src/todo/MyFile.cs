@@ -28,13 +28,13 @@ public class MyFile(string fileName) {
             currentTodo.Body = lineParts[1].Trim(' ');
 
             string[] metaDataParts = lineParts[0].Split(' ', 2);
-            
+
             if (metaDataParts.Length != 2) {
                 throw new UnreachableException($"Unable to parse meta data from \"{current}\" in {fileName}");
             }
 
             Classification classification = metaDataParts[0].ToClassification();
-            
+
             if (classification == Classification.Unknown) {
                 throw new UnreachableException($"Unable to parse classification from \"{current} in {fileName}");
             }
@@ -54,7 +54,7 @@ public class MyFile(string fileName) {
 
             todoItems.Add(currentTodo);
         }
-        
+
         return todoItems;
     }
 
@@ -65,54 +65,42 @@ public class MyFile(string fileName) {
         item.Classification = classification;
 
         _todoItems.Add(item);
-
-        WriteTodosToFile();
     }
 
-    public void UpdateFinished(int index, bool finished) {
+    public bool Delete(int index) {
         if (index < 1 || index - 1 > _todoItems.Count) {
-            Message.Info("Could not find the right index, shutting down");
-            Environment.Exit(0);
+            return false;
         }
-
-        _todoItems[index - 1].Finished = finished;
-
-        WriteTodosToFile();
-    }
-
-    public void Delete(int index) {
-        if (index < 1 || index - 1 > _todoItems.Count) {
-            Message.Info("Could not find the right index, shutting down");
-            Environment.Exit(0);
-        }
-
         _todoItems.RemoveAt(index - 1);
-        WriteTodosToFile();
+        return true;
     }
 
     public void DeleteAll() {
         Message.Debug($"Filename: {fileName}");
         Message.Debug($"Full path: {Path.GetFullPath(fileName)}");
         Message.Debug("DeleteAll");
-        File.WriteAllText(fileName, string.Empty);
+        _todoItems.Clear();
     }
 
-    public void WriteTodosToFile() {
+    public void Save() {
         List<string> rawLines = [];
         foreach (TodoItem current in _todoItems) {
-            string finishedString = "x";
-            if (!current.Finished) {
-                finishedString = "_";
-            }
-
+            string finishedString = current.Finished ? "x" : "_";
             rawLines.Add($"{current.Classification} {finishedString}: {current.Body}");
             File.WriteAllLines(fileName, rawLines);
         }
     }
+    public bool Finish(int doneIndex) {
+        if (doneIndex < 1 || doneIndex - 1 > _todoItems.Count) {
+            return false;
+        }
+        _todoItems[doneIndex - 1].Finished = true;
+        return true;
+    }
 }
 
 public class TodoItem {
-    public Classification Classification;
-    public bool Finished;
-    public string Body = "";
+    public Classification Classification { get; set; }
+    public bool Finished { get; set; }
+    public string Body { get; set; } = "";
 }

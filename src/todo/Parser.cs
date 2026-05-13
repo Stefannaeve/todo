@@ -26,7 +26,7 @@ public static class Parser {
         currentTodo.Finished = finished;
 
         if (!lineSpan.MoveNext()) {
-            throw new InvalidOperationException($"Unable to parse line : \"{line}\"");
+            throw new InvalidOperationException($"Missing body : \"{line}\"");
         }
         currentTodo.Body = line[lineSpan.Current.Start..].Trim().ToString();
 
@@ -39,7 +39,9 @@ public static class Parser {
             throw new InvalidOperationException($"Unable to parse line : \"{line}\"");
         }
 
-        Classification classification = metaDataSpan[metadataPartsSpan.Current].ToClassification();
+        if (!Enum.TryParse(metaDataSpan[metadataPartsSpan.Current], ignoreCase: true, out Classification classification)) {
+            throw new InvalidOperationException($"Unable to parse classification from \"{line}\"");
+        }
 
         if (!metadataPartsSpan.MoveNext()) {
             throw new InvalidOperationException($"Unable to parse line : \"{line}\"");

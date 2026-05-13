@@ -19,7 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\src\todo\todo.csproj" />
+      <ProjectReference Include="..\..\src\todo\todo.csproj" />
     </ItemGroup>
 
 </Project>

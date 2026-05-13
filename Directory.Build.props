@@ -1,0 +1,8 @@
+<Project>
+    <PropertyGroup>
+        <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+        <AnalysisMode>Recommended</AnalysisMode>
+        <EnableNETAnalyzers>true</EnableNETAnalyzers>
+        <AnalysisLevel>10</AnalysisLevel>
+    </PropertyGroup>
+</Project>

@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Globalization;
 using todo.Extensions;
 using todo.HelperClasses;
 
@@ -15,18 +14,9 @@ public class MyFile(string fileName) {
         List<TodoItem> temp = new List<TodoItem>();
 
         temp = Parser.ParseLines(File.ReadAllLines(fileName)).ToList();
-
-        foreach (TodoItem variable in temp) {
-            if (variable.Classification == Classification.Important) {
-                _todoItems.Add(variable);
-            }
-        }
-
-        foreach (TodoItem variable in temp) {
-            if (variable.Classification == Classification.Regular) {
-                _todoItems.Add(variable);
-            }
-        }
+        
+        _todoItems.AddRange(temp.OrderBy(argument => argument.Classification));
+        
     }
 
     public List<TodoItem> ParseTodoItemFromLine(List<string> rawLines) {

@@ -6,29 +6,30 @@ namespace todo;
 internal static class Program {
     private static void Main(string[] args) {
         bool info = false;
-        
-        if (args.Length < 1) {
-            Message.Info("Args less than one, exiting program");
-            Environment.Exit(0);
-        }
 
-        Command command = args[0].ToCommand();
+        Command command;
+
+        command = args.Length == 0 ? Command.None : args[0].ToCommand();
+
 
         if (command == Command.Unknown) {
             throw new InvalidOperationException("Could not parse Command");
         }
 
-        List<Argument> terminalArguments = args[1..].GetArgumentType().ToList();
+        bool status = true;
+        List<Argument> terminalArguments = new List<Argument>();
 
-        bool status = ArgumentValidator.validateArguments(command, terminalArguments);
-
-        // Make more explicit in the future
-        if (status == false) {
-            throw new InvalidOperationException("Invalid arguments");
+        if (args.Length > 1) {
+            terminalArguments = args[1..].GetArgumentType().ToList();
+            status = ArgumentValidator.validateArguments(command, terminalArguments);
         }
 
-        // I have ExtraInfo things in the next for loop, thats why im doint
-        // a extra one here. 2n is not that bad, fuck off
+
+        // Make more explicit in the future
+        if (!status) {
+            throw new InvalidOperationException("Invalid arguments");
+        }
+        
         Message.InfoEnabled = terminalArguments.Any(argument => argument.ArgumentType == ArgumentType.Info);
         Message.VerboseEnabled = terminalArguments.Any(argument => argument.ArgumentType == ArgumentType.Verbose);
         
@@ -89,6 +90,11 @@ internal static class Program {
                 if (!myFile.Finish(doneIndex)) {
                     Message.Info($"Could not finish {doneIndex}");
                 }
+                break;
+            }
+            case Command.None: {
+                myFile.WriteTodos();
+                Environment.Exit(0);
                 break;
             }
             case Command.Unknown:

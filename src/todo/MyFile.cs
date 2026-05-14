@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using todo.Extensions;
 using todo.HelperClasses;
 
@@ -80,6 +81,28 @@ public class MyFile(string fileName) {
         Message.Debug($"Full path: {Path.GetFullPath(fileName)}");
         Message.Debug("DeleteAll");
         _todoItems.Clear();
+    }
+
+    public void WriteTodos() {
+        int index = 1;
+
+        List<TodoItem> regularTodoItem = new List<TodoItem>();
+
+        Console.WriteLine("a. hei");
+        foreach (TodoItem todoItem in _todoItems) {
+            string value = todoItem.Finished ? "x" : " ";
+            if (todoItem.Classification == Classification.Important) {
+                Console.WriteLine($"aaaaaaaaaa{index}. [{value}] {todoItem.Body}");
+            }
+            else {
+                regularTodoItem.Add(todoItem);
+            }
+        }
+
+        foreach (TodoItem todoItem in regularTodoItem) {
+            string value = todoItem.Finished ? "x" : " ";
+            Console.WriteLine($"{index}. [{value}] {todoItem.Body}");
+        }
     }
 
     public void Save() {

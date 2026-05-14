@@ -4,5 +4,6 @@ public enum Command {
     Unknown = 1,
     Add,
     Delete,
-    Done
+    Done,
+    None
 }

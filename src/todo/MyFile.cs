@@ -12,7 +12,21 @@ public class MyFile(string fileName) {
             File.Create(fileName);
         }
 
-        _todoItems = Parser.ParseLines(File.ReadAllLines(fileName)).ToList();
+        List<TodoItem> temp = new List<TodoItem>();
+
+        temp = Parser.ParseLines(File.ReadAllLines(fileName)).ToList();
+
+        foreach (TodoItem variable in temp) {
+            if (variable.Classification == Classification.Important) {
+                _todoItems.Add(variable);
+            }
+        }
+
+        foreach (TodoItem variable in temp) {
+            if (variable.Classification == Classification.Regular) {
+                _todoItems.Add(variable);
+            }
+        }
     }
 
     public List<TodoItem> ParseTodoItemFromLine(List<string> rawLines) {
@@ -60,10 +74,18 @@ public class MyFile(string fileName) {
     }
 
     public void Append(Classification classification, string body) {
-        TodoItem item = new TodoItem();
+        TodoItem item = new();
         item.Finished = false;
         item.Body = body;
         item.Classification = classification;
+
+        for (int i = 0; i < _todoItems.Count; i++) {
+            TodoItem current = _todoItems[i];
+            if (current.Classification == Classification.Regular && classification == Classification.Important) {
+                _todoItems.Insert(i, item);
+                return;
+            }
+        }
 
         _todoItems.Add(item);
     }
@@ -88,20 +110,21 @@ public class MyFile(string fileName) {
 
         List<TodoItem> regularTodoItem = new List<TodoItem>();
 
-        Console.WriteLine("a. hei");
         foreach (TodoItem todoItem in _todoItems) {
             string value = todoItem.Finished ? "x" : " ";
             if (todoItem.Classification == Classification.Important) {
-                Console.WriteLine($"aaaaaaaaaa{index}. [{value}] {todoItem.Body}");
+                Console.WriteLine($"{index++}. [{value}] {todoItem.Body}");
             }
             else {
                 regularTodoItem.Add(todoItem);
             }
         }
 
+        Console.WriteLine("");
+
         foreach (TodoItem todoItem in regularTodoItem) {
             string value = todoItem.Finished ? "x" : " ";
-            Console.WriteLine($"{index}. [{value}] {todoItem.Body}");
+            Console.WriteLine($"{index++}. [{value}] {todoItem.Body}");
         }
     }
 

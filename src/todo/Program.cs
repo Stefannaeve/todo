@@ -5,41 +5,20 @@ namespace todo;
 
 internal static class Program {
     private static void Main(string[] args) {
-        bool info = false;
+
+        CommandArgument commandArgument = ArgumentParser.parseArgs(args);
         
-        if (args.Length < 1) {
-            Message.Info("Args less than one, exiting program");
-            Environment.Exit(0);
-        }
-
-        Command command = args[0].ToCommand();
-
-        if (command == Command.Unknown) {
-            throw new InvalidOperationException("Could not parse Command");
-        }
-
-        List<Argument> terminalArguments = args[1..].GetArgumentType().ToList();
-
-        bool status = ArgumentValidator.validateArguments(command, terminalArguments);
-
-        // Make more explicit in the future
-        if (status == false) {
-            throw new InvalidOperationException("Invalid arguments");
-        }
-
-        // I have ExtraInfo things in the next for loop, thats why im doint
-        // a extra one here. 2n is not that bad, fuck off
-        Message.InfoEnabled = terminalArguments.Any(argument => argument.ArgumentType == ArgumentType.Info);
-        Message.VerboseEnabled = terminalArguments.Any(argument => argument.ArgumentType == ArgumentType.Verbose);
+        Message.InfoEnabled = commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.Info);
+        Message.VerboseEnabled = commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.Verbose);
         
-        Message.Debug(command.ToString());
+        Message.Debug(commandArgument.Command.ToString());
         MyFile myFile = new MyFile("todo.txt");
         myFile.ParseFile();
 
-        switch (command) {
+        switch (commandArgument.Command) {
             case Command.Add:
                 Message.ExtraInfo("Doing Adding");
-                string? body = terminalArguments
+                string? body = commandArgument.Arguments
                     .Where(argument => argument.ArgumentType == ArgumentType.Value)
                     .Select(argument => argument.Value)
                     .FirstOrDefault();
@@ -48,7 +27,7 @@ internal static class Program {
                 }
 
                 Classification classification =
-                    terminalArguments.Any(argument => argument.ArgumentType == ArgumentType.Important)
+                    commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.Important)
                         ? Classification.Important
                         : Classification.Regular;
                 
@@ -56,12 +35,12 @@ internal static class Program {
                 break;
 
             case Command.Delete:
-                if (terminalArguments.Any(argument => argument.ArgumentType == ArgumentType.All)) {
+                if (commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.All)) {
                     myFile.DeleteAll();
                     break;
                 }
 
-                string? value = terminalArguments.Where(argument => argument.ArgumentType == ArgumentType.Value)
+                string? value = commandArgument.Arguments.Where(argument => argument.ArgumentType == ArgumentType.Value)
                     .Select(argument => argument.Value)
                     .FirstOrDefault();
 
@@ -78,7 +57,7 @@ internal static class Program {
 
             case Command.Done: {
 
-                string? doneValue = terminalArguments.Where(argument => argument.ArgumentType == ArgumentType.Value)
+                string? doneValue = commandArgument.Arguments.Where(argument => argument.ArgumentType == ArgumentType.Value)
                     .Select(argument => argument.Value)
                     .FirstOrDefault();
 
@@ -86,9 +65,14 @@ internal static class Program {
                     throw new InvalidOperationException("Could not parse done index");
                 }
 
-                if (!myFile.Finish(doneIndex)) {
+                if (!myFile.ToggleFinished(doneIndex)) {
                     Message.Info($"Could not finish {doneIndex}");
                 }
+                break;
+            }
+            case Command.List: {
+                myFile.WriteTodos();
+                Environment.Exit(0);
                 break;
             }
             case Command.Unknown:

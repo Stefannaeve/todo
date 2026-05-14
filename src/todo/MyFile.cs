@@ -11,7 +11,12 @@ public class MyFile(string fileName) {
             File.Create(fileName);
         }
 
-        _todoItems = Parser.ParseLines(File.ReadAllLines(fileName)).ToList();
+        List<TodoItem> temp = new List<TodoItem>();
+
+        temp = Parser.ParseLines(File.ReadAllLines(fileName)).ToList();
+        
+        _todoItems.AddRange(temp.OrderBy(argument => argument.Classification));
+        
     }
 
     public List<TodoItem> ParseTodoItemFromLine(List<string> rawLines) {
@@ -59,10 +64,18 @@ public class MyFile(string fileName) {
     }
 
     public void Append(Classification classification, string body) {
-        TodoItem item = new TodoItem();
+        TodoItem item = new();
         item.Finished = false;
         item.Body = body;
         item.Classification = classification;
+
+        for (int i = 0; i < _todoItems.Count; i++) {
+            TodoItem current = _todoItems[i];
+            if (current.Classification == Classification.Regular && classification == Classification.Important) {
+                _todoItems.Insert(i, item);
+                return;
+            }
+        }
 
         _todoItems.Add(item);
     }
@@ -82,6 +95,29 @@ public class MyFile(string fileName) {
         _todoItems.Clear();
     }
 
+    public void WriteTodos() {
+        int index = 1;
+
+        List<TodoItem> regularTodoItem = new List<TodoItem>();
+
+        foreach (TodoItem todoItem in _todoItems) {
+            string value = todoItem.Finished ? "x" : " ";
+            if (todoItem.Classification == Classification.Important) {
+                Console.WriteLine($"{index++}.\t[{value}] {todoItem.Body}");
+            }
+            else {
+                regularTodoItem.Add(todoItem);
+            }
+        }
+
+        Console.WriteLine("");
+
+        foreach (TodoItem todoItem in regularTodoItem) {
+            string value = todoItem.Finished ? "x" : " ";
+            Console.WriteLine($"{index++}.\t[{value}] {todoItem.Body}");
+        }
+    }
+
     public void Save() {
         List<string> rawLines = [];
         foreach (TodoItem current in _todoItems) {
@@ -90,11 +126,12 @@ public class MyFile(string fileName) {
         }
         File.WriteAllLines(fileName, rawLines);
     }
-    public bool Finish(int doneIndex) {
+    public bool ToggleFinished(int doneIndex) {
         if (doneIndex < 1 || doneIndex - 1 > _todoItems.Count) {
             return false;
         }
-        _todoItems[doneIndex - 1].Finished = true;
+
+        _todoItems[doneIndex - 1].Finished = !_todoItems[doneIndex - 1].Finished;
         return true;
     }
 }

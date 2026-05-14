@@ -11,7 +11,7 @@ public static class ArgumentValidator {
 
     public static bool validateArguments(Command command, List<Argument> terminalArguments) {
 
-        if (terminalArguments.All(argument => argument.ArgumentType != ArgumentType.None)) {
+        if (terminalArguments.All(argument => argument.ArgumentType == ArgumentType.None)) {
             return false;
         }
 

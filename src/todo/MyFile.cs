@@ -103,7 +103,7 @@ public class MyFile(string fileName) {
         foreach (TodoItem todoItem in _todoItems) {
             string value = todoItem.Finished ? "x" : " ";
             if (todoItem.Classification == Classification.Important) {
-                Console.WriteLine($"{index++}. [{value}] {todoItem.Body}");
+                Console.WriteLine($"{index++}.\t[{value}] {todoItem.Body}");
             }
             else {
                 regularTodoItem.Add(todoItem);
@@ -114,7 +114,7 @@ public class MyFile(string fileName) {
 
         foreach (TodoItem todoItem in regularTodoItem) {
             string value = todoItem.Finished ? "x" : " ";
-            Console.WriteLine($"{index++}. [{value}] {todoItem.Body}");
+            Console.WriteLine($"{index++}.\t[{value}] {todoItem.Body}");
         }
     }
 
@@ -126,11 +126,12 @@ public class MyFile(string fileName) {
         }
         File.WriteAllLines(fileName, rawLines);
     }
-    public bool Finish(int doneIndex) {
+    public bool ToggleFinished(int doneIndex) {
         if (doneIndex < 1 || doneIndex - 1 > _todoItems.Count) {
             return false;
         }
-        _todoItems[doneIndex - 1].Finished = true;
+
+        _todoItems[doneIndex - 1].Finished = !_todoItems[doneIndex - 1].Finished;
         return true;
     }
 }

@@ -65,7 +65,7 @@ internal static class Program {
                     throw new InvalidOperationException("Could not parse done index");
                 }
 
-                if (!myFile.Finish(doneIndex)) {
+                if (!myFile.ToggleFinished(doneIndex)) {
                     Message.Info($"Could not finish {doneIndex}");
                 }
                 break;

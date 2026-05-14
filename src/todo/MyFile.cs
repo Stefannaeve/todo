@@ -87,8 +87,8 @@ public class MyFile(string fileName) {
         foreach (TodoItem current in _todoItems) {
             string finishedString = current.Finished ? "x" : "_";
             rawLines.Add($"{current.Classification} {finishedString}: {current.Body}");
-            File.WriteAllLines(fileName, rawLines);
         }
+        File.WriteAllLines(fileName, rawLines);
     }
     public bool Finish(int doneIndex) {
         if (doneIndex < 1 || doneIndex - 1 > _todoItems.Count) {
@@ -97,10 +97,4 @@ public class MyFile(string fileName) {
         _todoItems[doneIndex - 1].Finished = true;
         return true;
     }
-}
-
-public class TodoItem {
-    public Classification Classification { get; set; }
-    public bool Finished { get; set; }
-    public string Body { get; set; } = "";
 }

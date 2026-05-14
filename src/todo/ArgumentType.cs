@@ -5,5 +5,6 @@ public enum ArgumentType {
     Important,
     All,
     Info,
-    Verbose
+    Verbose,
+    Value
 }

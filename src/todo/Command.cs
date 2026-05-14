@@ -1,6 +1,6 @@
 namespace todo;
 
-public enum Condition {
+public enum Command {
     Unknown = 1,
     Add,
     Delete,

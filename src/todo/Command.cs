@@ -5,5 +5,5 @@ public enum Command {
     Add,
     Delete,
     Done,
-    None
+    List
 }

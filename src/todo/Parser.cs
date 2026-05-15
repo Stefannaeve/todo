@@ -6,7 +6,7 @@ namespace todo;
 public static class Parser {
 
     public static IEnumerable<TodoItem> ParseLines(IEnumerable<string> lines) {
-        foreach (ReadOnlySpan<char> line in lines) {
+        foreach (ReadOnlySpan<char> line in lines.Where(line => !string.IsNullOrWhiteSpace(line))) {
             yield return ParseLine(line);
         }
     }

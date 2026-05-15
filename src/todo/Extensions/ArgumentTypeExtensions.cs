@@ -1,10 +1,15 @@
 namespace todo.Extensions;
 
-public static class ArgumentTypeExtensions {
-    extension(string[] args) {
-        public IEnumerable<Argument> GetArgumentType() {
-            foreach (string argument in args) {
-                Argument arg = argument switch {
+public static class ArgumentTypeExtensions
+{
+    extension(string[] args)
+    {
+        public IEnumerable<Argument> GetArgumentType()
+        {
+            foreach (string argument in args)
+            {
+                Argument arg = argument switch
+                {
                     "-i" or "-important" or "--important" =>
                         new Argument(ArgumentType.Important, null),
                     "-a" or "-all" or "--all" =>

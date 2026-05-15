@@ -10,7 +10,8 @@ public class MyFile(string fileName) {
     public IReadOnlyCollection<ParseError> ParseErrors => _parser.ParseErrors;
     public void ParseFile() {
         if (!File.Exists(fileName)) {
-            File.Create(fileName);
+            FileStream fileStream = File.Create(fileName);
+            fileStream.Close();
         }
 
 

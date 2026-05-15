@@ -17,7 +17,7 @@ public class ConfigHandler {
             Directory.CreateDirectory(ConfigPath());
         }
 
-        SaveConfig(new Config(Path.Combine(ConfigPath(), "todo.txt")));
+        SaveConfig(new Config(Path.Combine(ConfigPath(), "todo")));
     }
 
     public static void SaveConfig(Config config) => File.WriteAllText(ConfigFilePath(), JsonSerializer.Serialize(config));

@@ -21,12 +21,12 @@ internal static class Program {
         Message.InfoEnabled = commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.Info);
         Message.VerboseEnabled = commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.Verbose);
         
-        Git git = new Git(config.TodoPath);
+        Git git = new(config.TodoPath);
         
         git.Pull();
 
         Message.Debug(commandArgument.Command.ToString());
-        MyFile myFile = new MyFile(Path.Combine(config.TodoPath, "todo.txt"));
+        MyFile myFile = new(Path.Combine(config.TodoPath, "todo.txt"));
         myFile.ParseFile();
         
         if (myFile.ParseErrors.Count > 0) {

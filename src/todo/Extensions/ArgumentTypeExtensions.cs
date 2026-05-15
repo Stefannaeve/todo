@@ -5,13 +5,13 @@ public static class ArgumentTypeExtensions {
         public IEnumerable<Argument> GetArgumentType() {
             foreach (string argument in args) {
                 Argument arg = argument switch {
-                    "-i" or "-important" or "--important" =>
+                    ("-i" or "--important") =>
                         new Argument(ArgumentType.Important, null),
-                    "-a" or "-all" or "--all" =>
+                    "-a" or "--all" =>
                         new Argument(ArgumentType.All, null),
-                    "-info" or "--info" =>
+                    "--info" =>
                         new Argument(ArgumentType.Info, null),
-                    "-v" or "-verbose" or "--verbose" =>
+                    "-v" or "--verbose" =>
                         new Argument(ArgumentType.Verbose, null),
                     string a when !a.StartsWith("-") =>
                         new Argument(ArgumentType.Value, argument),

@@ -1,10 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
+        <PackageId>stefan.todo</PackageId>
         <OutputType>Exe</OutputType>
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        
+        <PackAsTool>true</PackAsTool>
+        <ToolCommandName>todo</ToolCommandName>
+        <PackageOutputPath>./nupkg</PackageOutputPath> 
     </PropertyGroup>
 
     <ItemGroup>

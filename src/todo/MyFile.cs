@@ -6,16 +6,17 @@ namespace todo;
 
 public class MyFile(string fileName) {
     private List<TodoItem> _todoItems = [];
+    private readonly Parser _parser = new();
+    public IReadOnlyCollection<ParseError> ParseErrors => _parser.ParseErrors;
     public void ParseFile() {
         if (!File.Exists(fileName)) {
             File.Create(fileName);
         }
 
-        List<TodoItem> temp = new List<TodoItem>();
 
-        temp = Parser.ParseLines(File.ReadAllLines(fileName)).ToList();
-        
-        _todoItems.AddRange(temp.OrderBy(argument => argument.Classification));
+        IEnumerable<TodoItem> todoItems = _parser.ParseLines(File.ReadAllLines(fileName));
+
+        _todoItems.AddRange(todoItems.OrderBy(argument => argument.Classification));
         
     }
 

@@ -27,6 +27,12 @@ internal static class Program {
         Message.Debug(commandArgument.Command.ToString());
         MyFile myFile = new MyFile(config.TodoPath);
         myFile.ParseFile();
+        
+        if (myFile.ParseErrors.Count > 0) {
+            foreach (ParseError parseError in myFile.ParseErrors) {
+                Message.Info($"{parseError.Message} at line: {parseError.LineIndex}. this line will be deleted");
+            }
+        }
 
         switch (commandArgument.Command) {
             case Command.Add:

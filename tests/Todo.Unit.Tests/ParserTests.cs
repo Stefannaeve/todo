@@ -12,7 +12,8 @@ public class ParserTests {
             "Regular x: Seems to be working"
         ];
 
-        List<TodoItem> output = Parser.ParseLines(strings).ToList();
+        Parser parser = new();
+        List<TodoItem> output = parser.ParseLines(strings).ToList();
 
         Assert.Equal(2, output.Count);
         Assert.Equal(1, output.Count(todoItem => !todoItem.Finished));
@@ -21,7 +22,8 @@ public class ParserTests {
 
     [Fact]
     public void EmptyParserTest() {
-        List<TodoItem> output = Parser.ParseLines([]).ToList();
+        Parser parser = new();
+        List<TodoItem> output = parser.ParseLines([]).ToList();
         Assert.Empty(output);
     }
 
@@ -35,7 +37,8 @@ public class ParserTests {
             ""
         ];
 
-        List<TodoItem> output = Parser.ParseLines(strings).ToList();
+        Parser parser = new();
+        List<TodoItem> output = parser.ParseLines(strings).ToList();
 
         Assert.Equal(2, output.Count);
         Assert.Equal(1, output.Count(todoItem => !todoItem.Finished));
@@ -44,7 +47,9 @@ public class ParserTests {
     }
     [Fact]
     public void ParserTest() {
-        TodoItem todoItem = Parser.ParseLine("Important _: Seems to be working: or is it!?");
+        Parser parser = new();
+        TodoItem? todoItem = parser.ParseLine("Important _: Seems to be working: or is it!?");
+        Assert.NotNull(todoItem);
         Assert.Equal(Classification.Important, todoItem.Classification);
         Assert.False(todoItem.Finished);
         Assert.Equal("Seems to be working: or is it!?", todoItem.Body);
@@ -57,7 +62,10 @@ public class ParserTests {
     [InlineData("Important x awd :this is a body", "Metadata parts too long")]
     [InlineData("Important x", "Missing body")]
     public void InvalidParserTest(string input, string expectedMessage) {
-        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => Parser.ParseLine(input));
-        Assert.Contains(expectedMessage, exception.Message);
+        Parser parser = new();
+        parser.ParseLine(input);
+        IReadOnlyCollection<ParseError> errors = parser.ParseErrors;
+        Assert.Single(errors);
+        Assert.Contains(expectedMessage, errors.First().Message);
     }
 }

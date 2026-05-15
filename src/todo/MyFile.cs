@@ -11,11 +11,10 @@ public class MyFile(string fileName) {
             File.Create(fileName);
         }
 
-        List<TodoItem> temp = new List<TodoItem>();
 
-        temp = Parser.ParseLines(File.ReadAllLines(fileName)).ToList();
-        
-        _todoItems.AddRange(temp.OrderBy(argument => argument.Classification));
+        IEnumerable<TodoItem> todoItems = Parser.ParseLines(File.ReadAllLines(fileName));
+
+        _todoItems.AddRange(todoItems.OrderBy(argument => argument.Classification));
         
     }
 

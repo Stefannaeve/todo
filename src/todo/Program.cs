@@ -14,6 +14,12 @@ internal static class Program {
         Message.Debug(commandArgument.Command.ToString());
         MyFile myFile = new MyFile("todo.txt");
         myFile.ParseFile();
+        
+        if (Parser.ParseErrors.Count > 0) {
+            foreach (ParseError parseError in Parser.ParseErrors) {
+                Message.Info($"{parseError.Message} at line: {parseError.LineIndex}. this line will be deleted");
+            }
+        }
 
         switch (commandArgument.Command) {
             case Command.Add:

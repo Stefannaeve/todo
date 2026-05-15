@@ -9,23 +9,24 @@ internal static class Program {
             ConfigHandler.CreateConfig();
         }
 
-        Config? config = ConfigHandler.LoadConfig();
 
-        if (IsDevelopment()) {
-            config = new Config("todo.txt");
-        }
+        Config? config = IsDevelopment() ? new Config("todo.txt") : ConfigHandler.LoadConfig();
 
         if (config == null) {
             throw new InvalidOperationException("Config not found");
         }
-
+        
         CommandArgument commandArgument = ArgumentParser.parseArgs(args);
 
         Message.InfoEnabled = commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.Info);
         Message.VerboseEnabled = commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.Verbose);
+        
+        Git git = new Git(config.TodoPath);
+        
+        git.Pull();
 
         Message.Debug(commandArgument.Command.ToString());
-        MyFile myFile = new MyFile(config.TodoPath);
+        MyFile myFile = new MyFile(Path.Combine(config.TodoPath, "todo.txt"));
         myFile.ParseFile();
         
         if (myFile.ParseErrors.Count > 0) {
@@ -33,6 +34,8 @@ internal static class Program {
                 Message.Info($"{parseError.Message} at line: {parseError.LineIndex}. this line will be deleted");
             }
         }
+
+        string gitMessage = "";
 
         switch (commandArgument.Command) {
             case Command.Add:
@@ -51,11 +54,13 @@ internal static class Program {
                         : Classification.Regular;
 
                 myFile.Append(classification, body);
+                gitMessage = $"Added new Todo";
                 break;
 
             case Command.Delete:
                 if (commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.All)) {
                     myFile.DeleteAll();
+                    gitMessage = "Removed all todos";
                     break;
                 }
 
@@ -72,6 +77,8 @@ internal static class Program {
                 if (!myFile.Delete(deleteIndex)) {
                     Message.Info($"Could not delete {deleteIndex}");
                 }
+
+                gitMessage = $"Deleted index {deleteIndex}";
                 break;
 
             case Command.Done: {
@@ -87,6 +94,8 @@ internal static class Program {
                 if (!myFile.ToggleFinished(doneIndex)) {
                     Message.Info($"Could not finish {doneIndex}");
                 }
+
+                gitMessage = $"Updated status of {doneIndex}";
                 break;
             }
             case Command.List: {
@@ -101,6 +110,7 @@ internal static class Program {
                 throw new ArgumentOutOfRangeException();
         }
         myFile.Save();
+        git.Push(gitMessage);
     }
     static bool IsDevelopment() {
         string? env = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");

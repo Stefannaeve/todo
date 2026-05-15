@@ -10,12 +10,7 @@
         <PackAsTool>true</PackAsTool>
         <ToolCommandName>todo</ToolCommandName>
         <PackageOutputPath>./nupkg</PackageOutputPath> 
+        <UserSecretsId>8f379958-be23-47f2-9ea7-402ac19e4463</UserSecretsId> 
     </PropertyGroup>
-
-    <ItemGroup>
-      <None Update="todo.txt">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-    </ItemGroup>
 
 </Project>

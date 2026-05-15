@@ -5,3 +5,4 @@ riderModule.iml
 /_ReSharper.Caches/
 .idea
 todo.sln.DotSettings.user
+nupkg/

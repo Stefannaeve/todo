@@ -5,14 +5,27 @@ namespace todo;
 
 internal static class Program {
     private static void Main(string[] args) {
+        if (!ConfigHandler.ConfigExists()) {
+            ConfigHandler.CreateConfig();
+        }
+
+        Config? config = ConfigHandler.LoadConfig();
+
+        if (IsDevelopment()) {
+            config = new Config("todo.txt");
+        }
+
+        if (config == null) {
+            throw new InvalidOperationException("Config not found");
+        }
 
         CommandArgument commandArgument = ArgumentParser.parseArgs(args);
-        
+
         Message.InfoEnabled = commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.Info);
         Message.VerboseEnabled = commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.Verbose);
-        
+
         Message.Debug(commandArgument.Command.ToString());
-        MyFile myFile = new MyFile("todo.txt");
+        MyFile myFile = new MyFile(config.TodoPath);
         myFile.ParseFile();
 
         switch (commandArgument.Command) {
@@ -30,7 +43,7 @@ internal static class Program {
                     commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.Important)
                         ? Classification.Important
                         : Classification.Regular;
-                
+
                 myFile.Append(classification, body);
                 break;
 
@@ -47,7 +60,7 @@ internal static class Program {
                 if (!int.TryParse(value, out int deleteIndex)) {
                     throw new InvalidOperationException("Could not parse argument into int in delete");
                 }
-                    
+
                 Message.ExtraInfo("Doing Delete");
 
                 if (!myFile.Delete(deleteIndex)) {
@@ -82,5 +95,10 @@ internal static class Program {
                 throw new ArgumentOutOfRangeException();
         }
         myFile.Save();
+    }
+    static bool IsDevelopment() {
+        string? env = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
+
+        return string.Equals(env, "Development", StringComparison.OrdinalIgnoreCase);
     }
 }

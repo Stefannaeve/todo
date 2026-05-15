@@ -3,14 +3,14 @@ using static System.MemoryExtensions;
 
 namespace todo;
 
-public static class Parser {
+public class Parser {
 
-    public static IReadOnlyCollection<ParseError> ParseErrors { get => _parseErrors.AsReadOnly(); }
-    private static List<ParseError> _parseErrors = [];
+    public IReadOnlyCollection<ParseError> ParseErrors { get => _parseErrors.AsReadOnly(); }
+    private List<ParseError> _parseErrors = [];
 
-    private static int _lineIndex = 1;
+    private int _lineIndex = 1;
 
-    public static IEnumerable<TodoItem> ParseLines(IEnumerable<string> lines) {
+    public IEnumerable<TodoItem> ParseLines(IEnumerable<string> lines) {
         foreach (ReadOnlySpan<char> line in lines.Where(line => !string.IsNullOrWhiteSpace(line))) {
             TodoItem? todoItem = ParseLine(line);
             if (todoItem is not null) {
@@ -20,7 +20,7 @@ public static class Parser {
         }
     }
 
-    public static TodoItem? ParseLine(ReadOnlySpan<char> line) {
+    public TodoItem? ParseLine(ReadOnlySpan<char> line) {
         SpanSplitEnumerator<char> lineSpanEnumerator = line.Split(':');
         if (!lineSpanEnumerator.MoveNext()) {
             _parseErrors.Add(new ParseError(line.ToString(), $"Unable to parse line : \"{line}\"", _lineIndex));
@@ -46,7 +46,7 @@ public static class Parser {
 
         return currentTodo;
     }
-    private static (Classification? classification, bool? finished) ParseMetaData(ReadOnlySpan<char> line, ReadOnlySpan<char> metaDataSpan) {
+    private (Classification? classification, bool? finished) ParseMetaData(ReadOnlySpan<char> line, ReadOnlySpan<char> metaDataSpan) {
         SpanSplitEnumerator<char> metadataPartsSpanEnumerator = metaDataSpan.Split(' ');
 
         if (!metadataPartsSpanEnumerator.MoveNext()) {

@@ -15,8 +15,8 @@ internal static class Program {
         MyFile myFile = new MyFile("todo.txt");
         myFile.ParseFile();
         
-        if (Parser.ParseErrors.Count > 0) {
-            foreach (ParseError parseError in Parser.ParseErrors) {
+        if (myFile.ParseErrors.Count > 0) {
+            foreach (ParseError parseError in myFile.ParseErrors) {
                 Message.Info($"{parseError.Message} at line: {parseError.LineIndex}. this line will be deleted");
             }
         }

@@ -20,7 +20,7 @@ public static class ArgumentParser
 
         if (args.Length > 1)
         {
-            terminalArguments = args[1..].GetArgumentType().ToList();
+            terminalArguments = args[1..].GetArgumentType(command).ToList();
             status = ArgumentValidator.ValidateArguments(command, terminalArguments);
         }
 

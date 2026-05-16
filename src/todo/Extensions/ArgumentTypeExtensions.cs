@@ -4,24 +4,25 @@ public static class ArgumentTypeExtensions
 {
     extension(string[] args)
     {
-        public IEnumerable<Argument> GetArgumentType()
+        public IEnumerable<Argument> GetArgumentType(Command command)
         {
             foreach (string argument in args)
             {
                 Argument arg = argument switch
                 {
-                    ("-i" or "--important") =>
+                    "--important" =>
                         new Argument(ArgumentType.Important, null),
-                    "-a" or "--all" =>
+                    "--all" =>
                         new Argument(ArgumentType.All, null),
                     "--info" =>
                         new Argument(ArgumentType.Info, null),
-                    "-v" or "--verbose" =>
+                    "--verbose" =>
                         new Argument(ArgumentType.Verbose, null),
-                    string a when !a.StartsWith("-") =>
+                    string a when !a.StartsWith("--", StringComparison.InvariantCulture) && !a.StartsWith('-') =>
                         new Argument(ArgumentType.Value, argument),
-                    _ =>
-                        new Argument(ArgumentType.None, null)
+                    string a when a.StartsWith('-') => new Argument(ArgumentTypeRules.ExpandShortHand(command, a), null),
+                        _ =>
+                            new Argument(ArgumentType.None, null)
                 };
                 yield return arg;
             }

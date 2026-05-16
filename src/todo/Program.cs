@@ -20,7 +20,7 @@ internal static class Program
             throw new InvalidOperationException("Config not found");
         }
 
-        CommandArgument commandArgument = ArgumentParser.parseArgs(args);
+        CommandArgument commandArgument = ArgumentParser.ParseArgs(args);
 
         Message.InfoEnabled = commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.Info);
         Message.VerboseEnabled =

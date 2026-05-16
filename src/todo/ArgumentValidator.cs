@@ -4,31 +4,38 @@ namespace todo;
 
 public static class ArgumentValidator
 {
-    private static Dictionary<Command, List<ArgumentType>> _ruleSet = new() {
+    private static Dictionary<Command, List<ArgumentType>> _ruleSet = new()
+    {
         { Command.Git, [ArgumentType.Important] },
         { Command.Add, [ArgumentType.Important, ArgumentType.Info, ArgumentType.Verbose, ArgumentType.Value] },
         { Command.Delete, [ArgumentType.All, ArgumentType.Info, ArgumentType.Verbose, ArgumentType.Value] },
         { Command.Done, [ArgumentType.All, ArgumentType.Info, ArgumentType.Verbose, ArgumentType.Value] },
     };
 
-    private static Dictionary<Command, Dictionary<string, ArgumentType>> _dictionary = new() {
+    private static Dictionary<Command, Dictionary<string, ArgumentType>> _dictionary = new()
+    {
         {
-            Command.Git, new() {
+            Command.Git, new()
+            {
                 { "-i", ArgumentType.Important },
                 { "-v", ArgumentType.Verbose },
             }
-        }, {
-            Command.Add, new() {
+        },
+        {
+            Command.Add, new()
+            {
                 { "-i", ArgumentType.Important }
             }
-        }, {
-            Command.Delete, new() {
+        },
+        {
+            Command.Delete, new()
+            {
                 { "-i", ArgumentType.Important }
             }
         }
     };
 
-    public static bool validateArguments(Command command, List<Argument> terminalArguments)
+    public static bool ValidateArguments(Command command, List<Argument> terminalArguments)
     {
         if (terminalArguments.All(argument => argument.ArgumentType == ArgumentType.None))
         {

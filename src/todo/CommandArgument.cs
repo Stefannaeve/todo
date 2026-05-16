@@ -6,7 +6,7 @@ public record CommandArgument(Command Command, List<Argument> Arguments);
 
 public static class ArgumentParser
 {
-    public static CommandArgument parseArgs(string[] args)
+    public static CommandArgument ParseArgs(string[] args)
     {
         Command command = args.Length == 0 ? Command.List : args[0].ToCommand();
 
@@ -21,7 +21,7 @@ public static class ArgumentParser
         if (args.Length > 1)
         {
             terminalArguments = args[1..].GetArgumentType().ToList();
-            status = ArgumentValidator.validateArguments(command, terminalArguments);
+            status = ArgumentValidator.ValidateArguments(command, terminalArguments);
         }
 
 

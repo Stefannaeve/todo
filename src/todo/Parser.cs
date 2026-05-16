@@ -1,14 +1,10 @@
-using todo.Extensions;
 using static System.MemoryExtensions;
 
 namespace todo;
 
 public class Parser
 {
-    public IReadOnlyCollection<ParseError> ParseErrors
-    {
-        get => _parseErrors.AsReadOnly();
-    }
+    public IReadOnlyCollection<ParseError> ParseErrors => _parseErrors.AsReadOnly();
 
     private List<ParseError> _parseErrors = [];
 

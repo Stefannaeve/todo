@@ -25,8 +25,8 @@ internal static class Program
         Message.InfoEnabled = commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.Info);
         Message.VerboseEnabled =
             commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.Verbose);
-
         Git git = new(config.TodoPath);
+
         git.Pull();
 
         Message.Debug(commandArgument.Command.ToString());
@@ -94,6 +94,7 @@ internal static class Program
 
             case Command.Done:
             {
+
                 string? doneValue = commandArgument.Arguments
                     .Where(argument => argument.ArgumentType == ArgumentType.Value)
                     .Select(argument => argument.Value)

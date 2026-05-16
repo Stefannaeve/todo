@@ -3,7 +3,8 @@ using todo.Extensions;
 namespace todo;
 
 public static class ArgumentValidator
-{    private static Dictionary<Command, List<ArgumentType>> _ruleSet = new() {
+{
+    private static Dictionary<Command, List<ArgumentType>> _ruleSet = new() {
         { Command.Git, [ArgumentType.Important] },
         { Command.Add, [ArgumentType.Important, ArgumentType.Info, ArgumentType.Verbose, ArgumentType.Value] },
         { Command.Delete, [ArgumentType.All, ArgumentType.Info, ArgumentType.Verbose, ArgumentType.Value] },
@@ -27,8 +28,10 @@ public static class ArgumentValidator
         }
     };
 
-    public static bool validateArguments(Command command, List<Argument> terminalArguments) {
-        if (terminalArguments.All(argument => argument.ArgumentType == ArgumentType.None)) {
+    public static bool validateArguments(Command command, List<Argument> terminalArguments)
+    {
+        if (terminalArguments.All(argument => argument.ArgumentType == ArgumentType.None))
+        {
             return false;
         }
 

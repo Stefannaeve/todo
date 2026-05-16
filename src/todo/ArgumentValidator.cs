@@ -2,8 +2,8 @@ using todo.Extensions;
 
 namespace todo;
 
-public static class ArgumentValidator {
-    private static Dictionary<Command, List<ArgumentType>> _ruleSet = new() {
+public static class ArgumentValidator
+{    private static Dictionary<Command, List<ArgumentType>> _ruleSet = new() {
         { Command.Git, [ArgumentType.Important] },
         { Command.Add, [ArgumentType.Important, ArgumentType.Info, ArgumentType.Verbose, ArgumentType.Value] },
         { Command.Delete, [ArgumentType.All, ArgumentType.Info, ArgumentType.Verbose, ArgumentType.Value] },
@@ -33,8 +33,10 @@ public static class ArgumentValidator {
         }
 
         List<ArgumentType> allowedArgumentTypes = _ruleSet[command];
-        foreach (ArgumentType terminalArgumentType in terminalArguments.Select(argument => argument.ArgumentType)) {
-            if (!allowedArgumentTypes.Contains(terminalArgumentType)) {
+        foreach (ArgumentType terminalArgumentType in terminalArguments.Select(argument => argument.ArgumentType))
+        {
+            if (!allowedArgumentTypes.Contains(terminalArgumentType))
+            {
                 return false;
             }
         }

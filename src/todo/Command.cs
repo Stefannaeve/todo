@@ -1,6 +1,7 @@
 namespace todo;
 
-public enum Command {
+public enum Command
+{
     Unknown = 1,
     Git,
     Add,

@@ -6,25 +6,31 @@ public static class ArgumentTypeExtensions
     {
         public IEnumerable<Argument> GetArgumentType()
         {
-            foreach (string argument in args)
+            return args.Select(argument => argument.GetArgumentType());
+        }
+    }
+
+
+    extension(string arg)
+    {
+        public Argument GetArgumentType()
+        {
+            Argument argument = arg switch
             {
-                Argument arg = argument switch
-                {
-                    "-i" or "-important" or "--important" =>
-                        new Argument(ArgumentType.Important, null),
-                    "-a" or "-all" or "--all" =>
-                        new Argument(ArgumentType.All, null),
-                    "-info" or "--info" =>
-                        new Argument(ArgumentType.Info, null),
-                    "-v" or "-verbose" or "--verbose" =>
-                        new Argument(ArgumentType.Verbose, null),
-                    string a when !a.StartsWith("-") =>
-                        new Argument(ArgumentType.Value, argument),
-                    _ =>
-                        new Argument(ArgumentType.None, null)
-                };
-                yield return arg;
-            }
+                "--important" =>
+                    new Argument(ArgumentType.Important, null),
+                "--all" =>
+                    new Argument(ArgumentType.All, null),
+                "--info" =>
+                    new Argument(ArgumentType.Info, null),
+                "--verbose" =>
+                    new Argument(ArgumentType.Verbose, null),
+                not null when !arg.StartsWith('-') =>
+                    new Argument(ArgumentType.Value, arg),
+                _ =>
+                    new Argument(ArgumentType.None, null)
+            };
+            return argument;
         }
     }
 }

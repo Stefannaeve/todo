@@ -1,4 +1,6 @@
-﻿using todo.Extensions;
+﻿using todo.Commands;
+using todo.Extensions;
+using todo.Handlers;
 using todo.HelperClasses;
 
 namespace todo;
@@ -13,7 +15,7 @@ internal static class Program
         }
 
 
-        Config? config = IsDevelopment() ? new Config("todo.txt") : ConfigHandler.LoadConfig();
+        Config? config = IsDevelopment() ? new Config("") : ConfigHandler.LoadConfig();
 
         if (config == null)
         {
@@ -26,13 +28,15 @@ internal static class Program
         Message.VerboseEnabled =
             commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.Verbose);
 
-        Git git = new Git(config.TodoPath);
-
-        git.Pull();
+        // Git git = new Git(config.TodoPath);
+        //
+        // git.Pull();
 
         Message.Debug(commandArgument.Command.ToString());
         MyFile myFile = new MyFile(Path.Combine(config.TodoPath, "todo.txt"));
         myFile.ParseFile();
+        
+
 
         if (myFile.ParseErrors.Count > 0)
         {
@@ -44,29 +48,19 @@ internal static class Program
 
         string gitMessage = "";
 
+        CommandHandler handler = new(myFile);
+        ICommand? command;
         switch (commandArgument.Command)
         {
             case Command.Add:
-                Message.ExtraInfo("Doing Adding");
-                string? body = commandArgument.Arguments
-                    .Where(argument => argument.ArgumentType == ArgumentType.Value)
-                    .Select(argument => argument.Value)
-                    .FirstOrDefault();
-                if (body == null)
-                {
-                    throw new InvalidOperationException("The body of Add command is null");
-                }
-
-                Classification classification =
-                    commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.Important)
-                        ? Classification.Important
-                        : Classification.Regular;
-
-                myFile.Append(classification, body);
-                gitMessage = $"Added new Todo";
+               command = new AddCommand();
+                
+                // Når alle commands er ferdig implementert så kan handler.Handle komme etter switchen
+                handler.Handle(command, args[1..]);
                 break;
 
             case Command.Delete:
+                // command = new DeleteCommand();
                 if (commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.All))
                 {
                     myFile.DeleteAll();
@@ -95,6 +89,7 @@ internal static class Program
 
             case Command.Done:
             {
+                // command = new DoneCommand();
                 string? doneValue = commandArgument.Arguments
                     .Where(argument => argument.ArgumentType == ArgumentType.Value)
                     .Select(argument => argument.Value)
@@ -127,7 +122,7 @@ internal static class Program
         }
 
         myFile.Save();
-        git.Push(gitMessage);
+        // git.Push(gitMessage);
     }
 
     static bool IsDevelopment()

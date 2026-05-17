@@ -21,7 +21,8 @@ public static class ArgumentParser
         if (args.Length > 1)
         {
             terminalArguments = args[1..].GetArgumentType().ToList();
-            status = ArgumentValidator.validateArguments(command, terminalArguments);
+            // status = ArgumentValidator.validateArguments(command, terminalArguments);
+            // Skip validation for POC
         }
 
 

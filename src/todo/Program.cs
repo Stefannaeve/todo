@@ -15,6 +15,7 @@ internal static class Program
         }
 
 
+        Type a = typeof(AddCommand);
         Config? config = IsDevelopment() ? new Config("") : ConfigHandler.LoadConfig();
 
         if (config == null)
@@ -35,7 +36,6 @@ internal static class Program
         Message.Debug(commandArgument.Command.ToString());
         MyFile myFile = new MyFile(Path.Combine(config.TodoPath, "todo.txt"));
         myFile.ParseFile();
-        
 
 
         if (myFile.ParseErrors.Count > 0)
@@ -48,43 +48,17 @@ internal static class Program
 
         string gitMessage = "";
 
+        Register register = new();
+        register.RegisterCommand<AddCommand>(Command.Add);
+        register.RegisterCommand<DeleteCommand>(Command.Delete);
+
         CommandHandler handler = new(myFile);
-        ICommand? command;
         switch (commandArgument.Command)
         {
             case Command.Add:
-               command = new AddCommand();
-                
-                // Når alle commands er ferdig implementert så kan handler.Handle komme etter switchen
-                handler.Handle(command, args[1..]);
-                break;
-
             case Command.Delete:
-                // command = new DeleteCommand();
-                if (commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.All))
-                {
-                    myFile.DeleteAll();
-                    gitMessage = "Removed all todos";
-                    break;
-                }
-
-                string? value = commandArgument.Arguments.Where(argument => argument.ArgumentType == ArgumentType.Value)
-                    .Select(argument => argument.Value)
-                    .FirstOrDefault();
-
-                if (!int.TryParse(value, out int deleteIndex))
-                {
-                    throw new InvalidOperationException("Could not parse argument into int in delete");
-                }
-
-                Message.ExtraInfo("Doing Delete");
-
-                if (!myFile.Delete(deleteIndex))
-                {
-                    Message.Info($"Could not delete {deleteIndex}");
-                }
-
-                gitMessage = $"Deleted index {deleteIndex}";
+                ICommand command = register.GetCommand(commandArgument.Command);
+                handler.Handle(command, args[1..]);
                 break;
 
             case Command.Done:

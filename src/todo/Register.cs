@@ -9,7 +9,7 @@ public class Register
 
 
     // Register en ny command med Command.Enum som key
-    public void RegisterCommand<T>(Command command) where T : ICommand, new()
+    public void RegisterCommand<T>(Command command) where T : ICommand, new() // T må være av type ICommand og ha en empty constructor
     {
         Commands.Add(command, () => new T());
     }

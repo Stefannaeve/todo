@@ -28,12 +28,7 @@ public class AddCommand : ICommand
         Console.WriteLine($"{body}: {classification}");
     }
 
-    public List<Argument> ParseArguments(string[] args)
-    {
-        List<Argument> arguments = [];
-        arguments.AddRange(args.Select(ShortHand));
-        return arguments;
-    }
+    public List<Argument> ParseArguments(string[] args) => args.Select(ShortHand).ToList();
 
     private static Argument ShortHand(string arg) => arg switch
     {

@@ -53,6 +53,8 @@ internal static class Program
         register.RegisterCommand<DeleteCommand>(Command.Delete);
 
         CommandHandler handler = new(myFile);
+        
+        // om vi gjør det med alle commandene så trenger vi ikkje en switch i det hele tatt bare register.GetCommand -> Handler.Handle så skal det funke for alle
         switch (commandArgument.Command)
         {
             case Command.Add:

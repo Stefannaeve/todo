@@ -152,14 +152,14 @@ todo done 1
 todo
 ```
 
-`done` toggles completion: running it again on that task reopens it. Numbers can change when tasks are added or deleted, so check the list before using an index.
+`done` completes the task, removes it from the active list, and appends it to the archive for today. It no longer reopens tasks. Numbers can change after adding, deleting, or completing a task, so check the list before using an index.
 
 | What you want to do | Command |
 | --- | --- |
 | List tasks | `todo` or `todo list` |
 | Add a task | `todo add "Task description"` |
 | Add an important task | `todo add -i "Task description"` |
-| Complete or reopen a task | `todo done 1` |
+| Complete and archive a task | `todo done 1` |
 | Delete one task | `todo delete 1` |
 | Delete **all** tasks, without a confirmation prompt | `todo delete --all` |
 | Read tasks without contacting the remote | `todo list --offline` |
@@ -167,6 +167,39 @@ todo
 | Show diagnostic output | `todo list --verbose` |
 
 Quote task descriptions containing spaces. Adding or deleting multiple tasks in one command is not supported.
+
+## Completed task archive
+
+For example, finishing task 1 on January 23, 2026:
+
+```sh
+todo done 1
+```
+
+moves that task out of `todo.txt` and appends it to this file inside your configured task repository:
+
+```text
+my-tasks/
+├── todo.txt
+└── 2026/
+    └── january/
+        └── 23-01
+```
+
+The file name is `dd-MM`, with no extension. The year and date use your computer's local date at completion time; month folders always use lowercase English names. The folders and daily file are created automatically. Further tasks completed that day are appended to the same file, preserving existing entries. A different day, month, or year gets its own path.
+
+Each archived line keeps the task's priority and text, with a completed marker:
+
+```text
+Important x: Finish assignment
+Regular x: Buy groceries
+```
+
+Active tasks are still stored in `todo.txt`. `todo delete` only removes active tasks; it does not delete your completion history. Existing tasks marked `x` in `todo.txt` are not migrated automatically, because their original completion dates are unknown; using `done` on one archives it under today's date.
+
+With synchronization enabled, the active list and pending archive files are committed and pushed together. `todo done 1 --offline` performs the same move locally without committing or pushing; a later successful modifying command includes the pending archives when it synchronizes. Merely listing tasks does not push offline changes. Keep dated archives out of `.gitignore`, so Git can track your completion history. Files matching the `yyyy/month/dd-MM` archive layout are treated as task data; other repository files are excluded from task commits.
+
+If the archive cannot be written, the task stays active. Completion also stops when `todo.txt` has malformed lines, so it cannot silently discard them. `done` is no longer a completion toggle: running it again on the same number may complete the next task now occupying that position.
 
 ## Troubleshooting
 
@@ -190,7 +223,7 @@ For a permanent fix, add the same folder to your user PATH on Windows, or put th
 
 **The app reports conflicts or diverged history.** Resolve the repository with Git before resuming synchronization. Existing conflicts or unfinished Git operations block task commands even offline. The app will not merge or reset your data automatically.
 
-**The app says tasks were saved locally but synchronization failed.** Do not repeat the task command: an addition could be duplicated, or completion toggled again. Fix the reported Git problem and synchronize the saved changes manually. See the failure policy below.
+**The app says tasks were saved locally but synchronization failed.** Do not repeat the task command: an addition could be duplicated, or a different task completed. Fix the reported Git problem and synchronize the saved changes manually. See the failure policy below.
 
 ## Updating or removing the app
 
@@ -231,8 +264,8 @@ Running from source uses the same configuration as the installed tool unless you
 
 - Without a remote, tasks remain local; no identity, commits, pulls, or pushes are required.
 - With a remote, normal commands pull from the current branch's upstream before reading tasks. Pulls are fast-forward only, even when your Git configuration requests a rebase. A failed pull stops the command before applying task changes; the tool never automatically falls back to a stale local list.
-- Use `todo list --offline` or `todo add "A local task" --offline` to explicitly skip pull, commit, and push. Offline writes are saved in `todo.txt` and remain uncommitted. No remote or upstream is required for this mode. Git must still be installed.
+- Use `todo list --offline` or `todo add "A local task" --offline` to explicitly skip pull, commit, and push. Offline writes are saved in `todo.txt` and, for completed tasks, the dated archive; they remain uncommitted. No remote or upstream is required for this mode. Git must still be installed.
 - A diverged branch is left for you to reconcile with Git. An existing conflict or in-progress merge/rebase/cherry-pick/revert blocks all task commands, even offline, so the tool cannot rewrite conflict markers or pending resolutions. There are no automatic resets, stashes, conflict resolutions, or force pushes.
-- Changes stage and commit only `todo.txt`, including a previously untracked file. Unrelated staged files are left out of the commit. Push targets the same upstream branch used by pull.
-- If staging, committing, or pushing fails after a save, the task file is retained and the error explicitly says it was saved locally. Do not repeat the task command, as that could duplicate an addition or toggle completion again. Correct the reported problem and synchronize manually. After a failed push, the local commit remains; retry pushing to the configured upstream after resolving the failure. After a failed commit or offline edits, commit the task file first and reconcile any remote changes before pushing.
+- Changes stage and commit `todo.txt` and pending dated archive files together, including new files and archives created offline. Unrelated staged files are left out of the commit. Push targets the same upstream branch used by pull.
+- If staging, committing, or pushing fails after a save, the task file is retained and the error explicitly says it was saved locally. Do not repeat the task command, as that could duplicate an addition or complete a different task. Correct the reported problem and synchronize manually. After a failed push, the local commit remains; retry pushing to the configured upstream after resolving the failure. After a failed commit or offline edits, commit the task file and any dated archives together first and reconcile any remote changes before pushing.
 - A remote without a configured upstream requires Git setup before normal commands can run; `--offline` remains available. Git credential prompts are disabled, and each Git subprocess has a 30-second timeout so synchronization cannot hang indefinitely.

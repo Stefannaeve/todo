@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 using todo.Extensions;
 using todo.HelperClasses;
 
@@ -143,24 +144,81 @@ public class MyFile(string fileName)
 
     public void Save()
     {
-        List<string> rawLines = [];
-        foreach (TodoItem current in _todoItems)
+        string fullPath = Path.GetFullPath(fileName);
+        string temporary = Path.Combine(Path.GetDirectoryName(fullPath)!, $".todo-{Guid.NewGuid():N}.tmp");
+        try
         {
-            string finishedString = current.Finished ? "x" : "_";
-            rawLines.Add($"{current.Classification} {finishedString}: {current.Body}");
+            // Replace only after the complete new file has been written.
+            File.WriteAllLines(temporary, _todoItems.Select(current =>
+                $"{current.Classification} {(current.Finished ? "x" : "_")}: {current.Body}"));
+            File.Move(temporary, fullPath, overwrite: true);
         }
-
-        File.WriteAllLines(fileName, rawLines);
+        finally
+        {
+            File.Delete(temporary);
+        }
     }
 
-    public bool ToggleFinished(int doneIndex)
+    public string? Complete(int index, DateOnly date)
     {
-        if (doneIndex < 1 || doneIndex > _todoItems.Count)
+        if (index < 1 || index > _todoItems.Count)
         {
-            return false;
+            return null;
+        }
+        if (ParseErrors.Count > 0)
+        {
+            throw new InvalidDataException("Cannot archive tasks while todo.txt contains invalid lines. Fix those lines first; no tasks were changed.");
         }
 
-        _todoItems[doneIndex - 1].Finished = !_todoItems[doneIndex - 1].Finished;
-        return true;
+        string relativePath = CompletionArchive.RelativePath(date);
+        string archivePath = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(fileName))!, relativePath);
+        Directory.CreateDirectory(Path.GetDirectoryName(archivePath)!);
+        bool existed = File.Exists(archivePath);
+        bool completed = false;
+        try
+        {
+            using FileStream archive = new(archivePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+            long originalLength = archive.Length;
+            TodoItem item = _todoItems[index - 1];
+            bool removed = false;
+            try
+            {
+                bool needsNewline = false;
+                if (originalLength > 0)
+                {
+                    archive.Position = originalLength - 1;
+                    int lastByte = archive.ReadByte();
+                    needsNewline = lastByte != '\n' && lastByte != '\r';
+                }
+                archive.Position = originalLength;
+                using (StreamWriter writer = new(archive, new UTF8Encoding(false), leaveOpen: true))
+                {
+                    if (needsNewline) writer.WriteLine();
+                    writer.WriteLine($"{item.Classification} x: {item.Body}");
+                }
+                // Preserve the completed task before removing it from the active file.
+                archive.Flush(flushToDisk: true);
+                _todoItems.RemoveAt(index - 1);
+                removed = true;
+                Save();
+                completed = true;
+                return relativePath;
+            }
+            catch
+            {
+                if (removed) _todoItems.Insert(index - 1, item);
+                // A failed active-file save must not leave a second archived copy.
+                archive.SetLength(originalLength);
+                archive.Flush(flushToDisk: true);
+                throw;
+            }
+        }
+        finally
+        {
+            if (!completed && !existed && File.Exists(archivePath) && new FileInfo(archivePath).Length == 0)
+            {
+                File.Delete(archivePath);
+            }
+        }
     }
 }

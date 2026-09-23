@@ -109,10 +109,17 @@ public class Git(string repoPath)
         }
 
         (string Remote, string Branch) target = TrackingTarget();
-        RunProcess("add", "--", "todo.txt");
-        if (RunProcess("diff", "--cached", "--quiet", "--", "todo.txt").ExitCode == 1)
+        // Include archives completed offline, while excluding unrelated repository files.
+        string[] paths = RunProcess("ls-files", "--modified", "--deleted", "--others", "-z").Output
+            .Split('\0', StringSplitOptions.RemoveEmptyEntries)
+            .Where(CompletionArchive.IsArchivePath)
+            .Concat(RunProcess("diff", "--cached", "--name-only", "-z").Output
+                .Split('\0', StringSplitOptions.RemoveEmptyEntries).Where(CompletionArchive.IsArchivePath))
+            .Prepend("todo.txt").Distinct(StringComparer.Ordinal).ToArray();
+        RunProcess(["add", "--", .. paths]);
+        if (RunProcess(["diff", "--cached", "--quiet", "--", .. paths]).ExitCode == 1)
         {
-            RunProcess("commit", "-m", commitMessage, "--", "todo.txt");
+            RunProcess(["commit", "-m", commitMessage, "--", .. paths]);
         }
         // Use the same upstream as Pull, regardless of push.default or pushRemote.
         RunProcess("push", "--", target.Remote, $"HEAD:{target.Branch}");

@@ -15,6 +15,14 @@ internal static class Program
         {
             return Error(exception.Message);
         }
+        catch (IOException exception)
+        {
+            return Error($"Could not save or read task files: {exception.Message}");
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            return Error($"Cannot access task files: {exception.Message}");
+        }
     }
 
     private static int Run(string[] args)
@@ -69,6 +77,11 @@ internal static class Program
         Message.Debug(commandArgument.Command.ToString());
         MyFile myFile = new MyFile(Path.Combine(config.TodoPath, "todo.txt"));
         myFile.ParseFile();
+
+        if (myFile.ParseErrors.Count > 0 && commandArgument.Command == Command.Done)
+        {
+            return Error("Cannot archive tasks while todo.txt contains invalid lines. Fix those lines first; no tasks were changed.");
+        }
 
         if (myFile.ParseErrors.Count > 0)
         {
@@ -141,12 +154,14 @@ internal static class Program
                     throw new InvalidOperationException("Could not parse done index");
                 }
 
-                if (!myFile.ToggleFinished(doneIndex))
+                string? archivePath = myFile.Complete(doneIndex, DateOnly.FromDateTime(DateTime.Now));
+                if (archivePath is null)
                 {
                     return Error($"Task {doneIndex} does not exist. Use todo list to see available indices.");
                 }
 
-                gitMessage = $"Updated status of {doneIndex}";
+                Console.WriteLine($"Completed task {doneIndex}; archived in {archivePath}.");
+                gitMessage = $"Completed task {doneIndex} in {archivePath}";
                 break;
             }
             case Command.List:
@@ -161,7 +176,11 @@ internal static class Program
                 throw new ArgumentOutOfRangeException();
         }
 
-        myFile.Save();
+        // Complete saves the archive and active list together before returning.
+        if (commandArgument.Command != Command.Done)
+        {
+            myFile.Save();
+        }
         if (!offline)
         {
             try

@@ -117,6 +117,44 @@ public sealed class GitSyncTests : IDisposable
         Assert.Contains("no upstream", Assert.Throws<GitException>(() => new Git(Local).Pull()).Message);
     }
 
+    [Fact]
+    public void PushIncludesOfflineArchivesWithTheActiveList()
+    {
+        string taskPath = Path.Combine(Local, "todo.txt");
+        MyFile file = new(taskPath);
+        file.Append(Classification.Important, "First completion");
+        file.Append(Classification.Regular, "Next day");
+        file.Save();
+        Assert.NotNull(file.Complete(1, new DateOnly(2026, 1, 31)));
+        Assert.NotNull(file.Complete(1, new DateOnly(2026, 2, 1)));
+        File.WriteAllText(Path.Combine(Local, "unrelated.txt"), "Keep staged");
+        Run(Local, "add", "unrelated.txt");
+
+        new Git(Local).Push("Synchronize completions");
+
+        Assert.Empty(Run(Remote, "show", "main:todo.txt"));
+        Assert.Contains("Important x: First completion", Run(Remote, "show", "main:2026/january/31-01"));
+        Assert.Contains("Regular x: Next day", Run(Remote, "show", "main:2026/february/01-02"));
+        Assert.Equal("unrelated.txt", Run(Local, "diff", "--cached", "--name-only").Trim());
+        Assert.Equal(3, Run(Local, "diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD").Split('\n', StringSplitOptions.RemoveEmptyEntries).Length);
+    }
+
+    [Fact]
+    public void IgnoredArchiveStopsSynchronizationInsteadOfDroppingHistory()
+    {
+        string taskPath = Path.Combine(Local, "todo.txt");
+        MyFile file = new(taskPath);
+        file.Append(Classification.Regular, "Keep archived task");
+        file.Save();
+        Assert.NotNull(file.Complete(1, new DateOnly(2026, 1, 23)));
+        File.AppendAllText(Path.Combine(Local, ".git", "info", "exclude"), "\n2026/\n");
+
+        Assert.Throws<GitException>(() => new Git(Local).Push("Must fail"));
+
+        Assert.Equal("Initial", Run(Remote, "log", "-1", "--format=%s").Trim());
+        Assert.Contains("Keep archived task", File.ReadAllText(Path.Combine(Local, "2026/january/23-01")));
+    }
+
     [Theory]
     [InlineData("add", "Task")]
     [InlineData("delete", "1")]

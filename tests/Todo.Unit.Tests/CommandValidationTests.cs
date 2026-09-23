@@ -59,7 +59,9 @@ public class CommandValidationTests
     [InlineData(1, int.MaxValue)]
     public void InvalidIndicesLeaveTasksUnchanged(int count, int index)
     {
-        string path = Path.GetTempFileName();
+        string root = Path.Combine(Path.GetTempPath(), "todo-command-" + Guid.NewGuid());
+        Directory.CreateDirectory(root);
+        string path = Path.Combine(root, "todo.txt");
         try
         {
             MyFile file = new(path);
@@ -71,36 +73,39 @@ public class CommandValidationTests
             string before = File.ReadAllText(path);
 
             Assert.False(file.Delete(index));
-            Assert.False(file.ToggleFinished(index));
+            Assert.Null(file.Complete(index, new DateOnly(2026, 1, 23)));
             file.Save();
 
             Assert.Equal(before, File.ReadAllText(path));
         }
         finally
         {
-            File.Delete(path);
+            Directory.Delete(root, recursive: true);
         }
     }
 
     [Fact]
-    public void LastValidIndexCanBeToggledAndDeleted()
+    public void LastValidIndexCanBeCompletedAndRemainingTaskDeleted()
     {
-        string path = Path.GetTempFileName();
+        string root = Path.Combine(Path.GetTempPath(), "todo-command-" + Guid.NewGuid());
+        Directory.CreateDirectory(root);
+        string path = Path.Combine(root, "todo.txt");
         try
         {
             MyFile file = new(path);
             file.Append(Classification.Regular, "First");
             file.Append(Classification.Regular, "Last");
-            Assert.True(file.ToggleFinished(2));
             file.Save();
-            Assert.Equal("Regular x: Last", File.ReadAllLines(path)[1]);
-            Assert.True(file.Delete(2));
-            file.Save();
+            Assert.Equal("2026/january/23-01", file.Complete(2, new DateOnly(2026, 1, 23)));
+            Assert.Equal("Regular x: Last", File.ReadAllLines(Path.Combine(root, "2026/january/23-01")).Single());
             Assert.Equal("Regular _: First", File.ReadAllLines(path).Single());
+            Assert.True(file.Delete(1));
+            file.Save();
+            Assert.Empty(File.ReadAllLines(path));
         }
         finally
         {
-            File.Delete(path);
+            Directory.Delete(root, recursive: true);
         }
     }
 }

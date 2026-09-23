@@ -6,10 +6,10 @@ public static class ArgumentValidator
 {
     private static readonly Dictionary<Command, List<ArgumentType>> Rules = new()
     {
-        { Command.Add, [ArgumentType.Important, ArgumentType.Info, ArgumentType.Verbose, ArgumentType.Value] },
-        { Command.Delete, [ArgumentType.All, ArgumentType.Info, ArgumentType.Verbose, ArgumentType.Value] },
-        { Command.Done, [ArgumentType.Info, ArgumentType.Verbose, ArgumentType.Value] },
-        { Command.List, [ArgumentType.Info, ArgumentType.Verbose] },
+        { Command.Add, [ArgumentType.Important, ArgumentType.Info, ArgumentType.Verbose, ArgumentType.Offline, ArgumentType.Value] },
+        { Command.Delete, [ArgumentType.All, ArgumentType.Info, ArgumentType.Verbose, ArgumentType.Offline, ArgumentType.Value] },
+        { Command.Done, [ArgumentType.Info, ArgumentType.Verbose, ArgumentType.Offline, ArgumentType.Value] },
+        { Command.List, [ArgumentType.Info, ArgumentType.Verbose, ArgumentType.Offline] },
     };
 
     public static bool validateArguments(Command command, List<Argument> arguments) =>

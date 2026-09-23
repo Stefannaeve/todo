@@ -1,7 +1,10 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using todo.HelperClasses;
 
 namespace todo;
+
+public sealed class GitException(string message) : Exception(message);
 
 public class Git(string repoPath)
 {
@@ -12,15 +15,30 @@ public class Git(string repoPath)
         process.StartInfo.WorkingDirectory = repoPath;
         process.StartInfo.RedirectStandardOutput = true;
         process.StartInfo.RedirectStandardError = true;
+        process.StartInfo.Environment["GIT_TERMINAL_PROMPT"] = "0";
+        process.StartInfo.Environment["GCM_INTERACTIVE"] = "never";
         foreach (string argument in arguments)
         {
             process.StartInfo.ArgumentList.Add(argument);
         }
 
-        process.Start();
+        try
+        {
+            process.Start();
+        }
+        catch (Win32Exception exception)
+        {
+            throw new GitException($"Could not start Git. Check that Git is installed and the task directory is accessible. {exception.Message}");
+        }
+
         Task<string> output = process.StandardOutput.ReadToEndAsync();
         Task<string> error = process.StandardError.ReadToEndAsync();
-        process.WaitForExit();
+        if (!process.WaitForExit(30_000))
+        {
+            process.Kill(entireProcessTree: true);
+            process.WaitForExit();
+            throw new GitException($"git {arguments[0]} timed out after 30 seconds. Check connectivity and credentials, or use --offline for local tasks.");
+        }
         Task.WaitAll(output, error);
 
         if (Message.InfoEnabled || Message.VerboseEnabled)
@@ -30,7 +48,8 @@ public class Git(string repoPath)
 
         if (process.ExitCode != 0 && !(arguments[0] == "diff" && process.ExitCode == 1))
         {
-            throw new InvalidOperationException($"git {arguments[0]} failed: {error.Result.Trim()}");
+            string details = string.IsNullOrWhiteSpace(error.Result) ? output.Result.Trim() : error.Result.Trim();
+            throw new GitException($"git {arguments[0]} failed (exit {process.ExitCode}): {details}");
         }
 
         return (process.ExitCode, output.Result);
@@ -40,14 +59,42 @@ public class Git(string repoPath)
     {
         Directory.CreateDirectory(repoPath);
         string gitPath = Path.Combine(repoPath, ".git");
-        // Worktrees use a .git file; regular repositories use a directory.
         if (!Directory.Exists(gitPath) && !File.Exists(gitPath))
         {
             Init();
         }
     }
 
+    public void EnsureNoConflicts()
+    {
+        if (!string.IsNullOrWhiteSpace(RunProcess("ls-files", "--unmerged").Output))
+        {
+            throw new GitException("The task repository has unresolved conflicts. Resolve or abort the Git operation manually before using todo, including --offline. No task changes were saved.");
+        }
+
+        foreach (string marker in new[] { "MERGE_HEAD", "CHERRY_PICK_HEAD", "REVERT_HEAD", "rebase-merge", "rebase-apply", "sequencer" })
+        {
+            string path = RunProcess("rev-parse", "--git-path", marker).Output.Trim();
+            path = Path.GetFullPath(path, Path.GetFullPath(repoPath));
+            if (File.Exists(path) || Directory.Exists(path))
+            {
+                throw new GitException("A Git merge, rebase, or cherry-pick/revert is in progress. Complete or abort it manually before using todo, including --offline. No task changes were saved.");
+            }
+        }
+    }
+
     private bool HasRemote() => !string.IsNullOrWhiteSpace(RunProcess("remote").Output);
+
+    private (string Remote, string Branch) TrackingTarget()
+    {
+        string head = RunProcess("symbolic-ref", "--quiet", "HEAD").Output.Trim();
+        string[] target = RunProcess("for-each-ref", "--format=%(upstream:remotename)%00%(upstream:remoteref)", head).Output.Trim().Split('\0');
+        if (target.Length != 2 || string.IsNullOrEmpty(target[0]) || string.IsNullOrEmpty(target[1]))
+        {
+            throw new GitException("The current branch has no upstream. Configure its remote tracking branch with Git before syncing, or use --offline for local tasks.");
+        }
+        return (target[0], target[1]);
+    }
 
     public void Init() => RunProcess("init");
 
@@ -55,25 +102,39 @@ public class Git(string repoPath)
 
     public void Push(string commitMessage)
     {
-        // Fresh installations work locally without a Git identity or remote.
+        EnsureNoConflicts();
         if (!HasRemote())
         {
             return;
         }
 
+        (string Remote, string Branch) target = TrackingTarget();
         RunProcess("add", "--", "todo.txt");
         if (RunProcess("diff", "--cached", "--quiet", "--", "todo.txt").ExitCode == 1)
         {
             RunProcess("commit", "-m", commitMessage, "--", "todo.txt");
         }
-        RunProcess("push");
+        // Use the same upstream as Pull, regardless of push.default or pushRemote.
+        RunProcess("push", "--", target.Remote, $"HEAD:{target.Branch}");
     }
 
     public void Pull()
     {
-        if (HasRemote())
+        EnsureNoConflicts();
+        if (!HasRemote())
         {
-            RunProcess("pull");
+            return;
+        }
+
+        (string Remote, string Branch) target = TrackingTarget();
+        try
+        {
+            // Never create a merge or rebase implicitly, even if user config requests it.
+            RunProcess("pull", "--ff-only", "--no-rebase", "--no-autostash", "--", target.Remote, target.Branch);
+        }
+        catch (GitException exception)
+        {
+            throw new GitException($"Synchronization stopped before applying the task command. {exception.Message}\nCheck connectivity and credentials; for diverged history or local changes, reconcile the repository manually. Use --offline only when you want to work on the local task list.");
         }
     }
 

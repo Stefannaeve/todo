@@ -7,6 +7,18 @@ internal static class Program
 {
     private static int Main(string[] args)
     {
+        try
+        {
+            return Run(args);
+        }
+        catch (GitException exception)
+        {
+            return Error(exception.Message);
+        }
+    }
+
+    private static int Run(string[] args)
+    {
         CommandArgument commandArgument;
         try
         {
@@ -37,7 +49,16 @@ internal static class Program
         Git git = new Git(config.TodoPath);
 
         git.EnsureInitialized();
-        git.Pull();
+        bool offline = commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.Offline);
+        if (offline)
+        {
+            git.EnsureNoConflicts();
+            Console.Error.WriteLine("Offline mode: using local tasks; Git synchronization is skipped.");
+        }
+        else
+        {
+            git.Pull();
+        }
 
         Message.Debug(commandArgument.Command.ToString());
         MyFile myFile = new MyFile(Path.Combine(config.TodoPath, "todo.txt"));
@@ -135,7 +156,17 @@ internal static class Program
         }
 
         myFile.Save();
-        git.Push(gitMessage);
+        if (!offline)
+        {
+            try
+            {
+                git.Push(gitMessage);
+            }
+            catch (GitException exception)
+            {
+                return Error($"Tasks were saved locally, but synchronization failed. {exception.Message}\nDo not repeat the task command: it has already been applied. Fix the Git problem and synchronize the saved changes manually.");
+            }
+        }
         return 0;
     }
 

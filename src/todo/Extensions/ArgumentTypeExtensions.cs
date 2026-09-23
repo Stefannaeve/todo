@@ -18,6 +18,7 @@ public static class ArgumentTypeExtensions
                         new Argument(ArgumentType.Info, null),
                     "-v" or "-verbose" or "--verbose" =>
                         new Argument(ArgumentType.Verbose, null),
+                    "--offline" => new Argument(ArgumentType.Offline, null),
                     string a when !a.StartsWith("-") =>
                         new Argument(ArgumentType.Value, argument),
                     _ =>

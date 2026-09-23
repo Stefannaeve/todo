@@ -7,5 +7,6 @@ public enum ArgumentType
     All,
     Info,
     Verbose,
+    Offline,
     Value
 }

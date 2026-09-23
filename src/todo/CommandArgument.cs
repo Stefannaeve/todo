@@ -18,7 +18,9 @@ public static class ArgumentParser
             throw new CommandLineException("Unknown command. Use add, edit, delete, done, list, sync, status, or undo.");
         }
 
-        List<Argument> arguments = args.Length > 1 ? args[1..].GetArgumentType().ToList() : [];
+        List<Argument> arguments = command is Command.Add or Command.Edit
+            ? ParseTextArguments(args[1..], command == Command.Edit)
+            : args.Length > 1 ? args[1..].GetArgumentType().ToList() : [];
         string? error = ArgumentValidator.GetValidationError(command, arguments);
         if (error is not null)
         {
@@ -27,4 +29,24 @@ public static class ArgumentParser
 
         return new CommandArgument(command, arguments);
     }
+    private static List<Argument> ParseTextArguments(string[] tokens, bool needsIndex)
+    {
+        List<Argument> arguments = [];
+        int position = 0;
+        while (position < tokens.Length && tokens[position].StartsWith('-'))
+        {
+            if (tokens[position] == "--")
+            {
+                position++;
+                break;
+            }
+            arguments.AddRange(new[] { tokens[position++] }.GetArgumentType());
+        }
+        if (needsIndex && position < tokens.Length)
+            arguments.Add(new Argument(ArgumentType.Value, tokens[position++]));
+        if (position < tokens.Length)
+            arguments.Add(new Argument(ArgumentType.Value, string.Join(" ", tokens[position..])));
+        return arguments;
+    }
+
 }

@@ -153,7 +153,7 @@ todo done 1
 todo
 ```
 
-`done` completes the task, removes it from the active list, and appends it to the archive for today. Use `todo undo` to restore the most recent completion. Numbers can change after adding, deleting, or completing a task, so check the list before using an index.
+`done` completes the task, removes it from the active list, and appends it to the archive for today. Use `todo undo` to reverse the most recent completion or deletion. Numbers can change after adding, deleting, or completing a task, so check the list before using an index.
 
 | What you want to do | Command |
 | --- | --- |
@@ -162,16 +162,16 @@ todo
 | Add an important task | `todo add -i "Task description"` |
 | Change an active task's text | `todo edit 1 "New description"` |
 | Complete and archive a task | `todo done 1` |
-| Undo the most recent completion | `todo undo` |
+| Undo the most recent completion or deletion | `todo undo` |
 | Delete one task | `todo delete 1` |
 | Delete **all** tasks, without a confirmation prompt | `todo delete --all` |
 | Synchronize now and wait for completion | `todo sync` |
 | Check pending changes and synchronization errors | `todo status` |
 | Read tasks without contacting the remote | `todo list` |
-| Add a task without requesting background sync | `todo add "Task description" --offline` |
+| Add a task without requesting background sync | `todo add --offline "Task description"` |
 | Show diagnostic output | `todo list --verbose` |
 
-Quote task descriptions containing spaces. Adding or deleting multiple tasks in one command is not supported.
+Quotes are optional for ordinary task text. All remaining words form one task. Put options before the text, and before the index for `edit`. Deleting multiple indices in one command is not supported; `delete --all` clears the active list.
 
 ## Completed task archive
 
@@ -263,7 +263,7 @@ Running from source uses the same configuration as the installed tool unless you
 
 ## Command validation
 
-`add` takes exactly one nonblank task description; quote descriptions containing spaces. `delete` takes one positive index or `--all`, and `done` takes one positive index (`done --all` is unsupported). `list` accepts `--info` and `--verbose`. Extra values, unsupported flags, and missing arguments produce an error on stderr and exit code 1 before setup or synchronization. An index outside the current list also exits with code 1 without saving task changes.
+`add` joins all words after leading options into one nonblank task description. `edit` joins everything after its index into the replacement text. `delete` takes one positive index or `--all`, and `done` takes one positive index (`done --all` is unsupported). `list` accepts `--info` and `--verbose`. Unsupported leading flags and missing required arguments produce an error on stderr and exit code 1 before setup or synchronization. An index outside the current list also exits with code 1 without saving task changes.
 
 ## Local commands and background synchronization
 
@@ -279,29 +279,43 @@ Running from source uses the same configuration as the installed tool unless you
 - The existing fast-forward-only policy remains. If local and remote branches have both advanced, synchronization reports divergence and leaves reconciliation to you, even if a merge might be possible. There are no automatic merges, rebases, stashes, resets, or force pushes.
 - Requests are persisted before changing task files, and OS-held locks are released if a worker exits or crashes. After restarting the computer or recovering from a worker failure, run `todo sync` to retry pending work. Synchronization failures never require repeating the original add/delete/done command.
 
-## Undo the last completion
+## Undo the last completion or deletion
 
-`todo done 1` now shows the completed task text and a command you can run immediately:
+`done`, `delete`, and `delete --all` display an undo hint immediately:
 
 ```text
-Completed: Buy groceries
-Archived in 2026/january/23-01. Undo: todo undo
+Deleted: Buy groceries
+Undo: todo undo
 ```
 
-Run `todo undo` to remove that completion from its daily archive and restore the task, with its original priority, to the active list. Other tasks added or edited afterward are preserved. Undo uses the same local save and background synchronization as other changes; `todo undo --offline` skips requesting a worker.
+Run `todo undo` to reverse the latest successful completion or deletion, even in a new terminal session. A deleted task is restored with its original priority and completion flag; `delete --all` can be undone as a batch. Tasks added or edited afterward are preserved. Undoing a completion removes its archive entry and restores it to the active list. `todo undo --offline` restores locally without requesting background synchronization.
 
-Only the last successful `done` is remembered, across terminal sessions on this computer. Another `done` replaces it; a successful undo consumes it, so there is no undo history or redo. Add, edit, delete, list, and sync do not replace the remembered completion. Undo records are local Git metadata and are not synchronized between computers.
+There is only one shared undo slot. Each successful `done`, `delete`, or nonempty `delete --all` replaces it, and successful undo consumes it. Add, edit, list, sync, failed commands, and an empty `delete --all` leave it unchanged. There is no undo history or redo. The record stays in local Git metadata and is not synchronized between computers.
 
-If that daily archive has changed since the completion (for example, another computer appended an entry), undo refuses to overwrite it. If undo removes the only entry, the empty daily archive file remains. As with completion, do not repeat undo to retry synchronization; use `todo sync`.
+If a completed task's daily archive changed after completion, undo stops rather than overwriting those changes. Deletion undo does not touch archives. An empty daily file may remain after undoing its only completion. Retry synchronization with `todo sync`, not by repeating undo.
 
 ## Edit a task
 
-Use the number from `todo list` and quote the replacement text:
+Use the number from `todo list`, followed by the replacement text:
 
 ```sh
-todo edit 1 "Buy groceries and milk"
+todo edit 1 Buy groceries and milk
 ```
 
-This updates only the selected active task's text, preserving its priority, position, and completion flag. It saves locally immediately and requests background synchronization. Use `todo edit 1 "New text" --offline` to skip requesting a worker.
+This updates only the selected active task's text, preserving its priority, position, and completion flag. It saves locally immediately and requests background synchronization. Use `todo edit --offline 1 "New text"` to skip requesting a worker.
 
-The replacement must be one nonblank line. Missing or extra values and invalid indices are rejected without changing the task file. Editing does not change archived tasks or replace the remembered last completion; `todo undo` continues to undo only the last `done`, not the edit.
+The replacement must be one nonblank line. A missing index, missing text, blank or multiline text, and invalid indices are rejected without changing the task file. Editing does not change archives or replace the undo slot; `todo undo` reverses the last completion or deletion, not the edit.
+
+## Text without quotation marks
+
+```sh
+todo add Buy groceries and milk
+todo add -i --offline Finish assignment
+todo edit 1 Buy groceries tomorrow
+todo edit --offline 1 Buy groceries tomorrow
+todo add -- --offline is part of this task
+```
+
+For `add`, leading options are parsed until the first text word. For `edit`, options must come before the index; everything after the index is text. Once text starts, even `--offline` or `-i` is literal task text, not an option. Unquoted words are joined with single spaces. Quoted text still works and can preserve repeated spaces.
+
+Your shell still interprets special characters such as `&`, `;`, `$`, and wildcards. Quote or escape those when you want them literally in the task. The app cannot change shell parsing.

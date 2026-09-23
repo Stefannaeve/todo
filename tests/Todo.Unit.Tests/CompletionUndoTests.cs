@@ -121,5 +121,74 @@ public sealed class CompletionUndoTests : IDisposable
         Assert.False(File.Exists(ArchivePath));
     }
 
+    [Fact]
+    public void UndoDeleteRestoresOriginalPriorityStatusAndPreservesNewTasks()
+    {
+        File.WriteAllLines(TaskPath, ["Important x: Deleted task", "Regular _: Other"]);
+        MyFile file = Read();
+        UndoStore.Delete(file, 1, all: false);
+        file.Append(Classification.Regular, "Added later");
+        file.Save();
+
+        UndoStore.Undo(Read());
+
+        Assert.Equal(["Important x: Deleted task", "Regular _: Other", "Regular _: Added later"], File.ReadAllLines(TaskPath));
+        Assert.False(File.Exists(ArchivePath));
+        Assert.Throws<InvalidDataException>(() => UndoStore.Validate());
+    }
+
+    [Fact]
+    public void UndoDeleteAllRestoresDuplicateTasksAndPreservesNewEntries()
+    {
+        File.WriteAllLines(TaskPath, ["Important _: First", "Regular _: Same", "Regular _: Same"]);
+        MyFile file = Read();
+        UndoStore.Delete(file, 0, all: true);
+        Assert.Empty(File.ReadAllBytes(TaskPath));
+        Assert.Null(UndoStore.Delete(file, 0, all: true));
+        file.Append(Classification.Regular, "New task");
+        file.Save();
+
+        UndoStore.Undo(Read());
+
+        Assert.Equal(["Important _: First", "Regular _: Same", "Regular _: Same", "Regular _: New task"], File.ReadAllLines(TaskPath));
+        Assert.Throws<InvalidDataException>(() => UndoStore.Validate());
+    }
+
+    [Fact]
+    public void DeleteReplacesRememberedDoneWithoutChangingArchive()
+    {
+        File.WriteAllLines(TaskPath, ["Regular _: Complete me", "Regular _: Delete me"]);
+        MyFile file = Read();
+        UndoStore.Complete(file, 1, _date);
+        UndoStore.Delete(file, 1, all: false);
+        UndoStore.Undo(Read());
+
+        Assert.Equal("Regular _: Delete me", File.ReadAllLines(TaskPath).Single());
+        Assert.Equal("Regular x: Complete me", File.ReadAllLines(ArchivePath).Single());
+        Assert.Throws<InvalidDataException>(() => UndoStore.Validate());
+    }
+
+    [Fact]
+    public void DoneReplacesRememberedDelete()
+    {
+        File.WriteAllLines(TaskPath, ["Regular _: Delete me", "Regular _: Complete me"]);
+        MyFile file = Read();
+        UndoStore.Delete(file, 1, all: false);
+        UndoStore.Complete(file, 1, _date);
+        UndoStore.Undo(Read());
+        Assert.Equal("Regular _: Complete me", File.ReadAllLines(TaskPath).Single());
+        Assert.Throws<InvalidDataException>(() => UndoStore.Validate());
+    }
+
+    [Fact]
+    public void FailedDeletionRecordWriteRestoresActiveFile()
+    {
+        Directory.CreateDirectory(Path.Combine(_root, ".git"));
+        File.WriteAllText(Path.Combine(_root, ".git", "todo-sync"), "Blocks metadata");
+        File.WriteAllText(TaskPath, "Regular _: Keep me\n");
+        Assert.ThrowsAny<IOException>(() => UndoStore.Delete(Read(), 1, all: false));
+        Assert.Equal("Regular _: Keep me\n", File.ReadAllText(TaskPath));
+    }
+
     public void Dispose() => Directory.Delete(_root, recursive: true);
 }

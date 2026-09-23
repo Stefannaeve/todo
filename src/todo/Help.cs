@@ -10,13 +10,13 @@ internal static class Help
 
         Usage:
           todo                         List local tasks (same as todo list).
-          todo add [-i] "task text"     Add one task; -i marks it important.
-          todo edit <index> "text"     Change an active task's text; keep its priority.
+          todo add [-i] task text       Add one task; -i marks it important.
+          todo edit <index> text       Change an active task's text; keep its priority.
           todo list                    Show local task numbers and completion status.
           todo done <index>            Complete a task and move it to its dated archive.
           todo delete <index>          Delete one task.
           todo delete --all            Delete every task without confirmation.
-          todo undo                    Restore the most recent completed task (once).
+          todo undo                    Undo the last done/delete action (once).
           todo sync                    Wait for pending changes to sync and fetch remote tasks.
           todo status                  Show pending changes, worker state, and sync errors.
           todo -h | -help | --help     Show this help.
@@ -29,16 +29,17 @@ internal static class Help
           -v, -verbose, --verbose     Show diagnostic output.
 
         Examples:
-          todo add "Buy groceries"
-          todo add -i "Finish assignment"
+          todo add Buy groceries
+          todo add -i Finish assignment
           todo list --offline
           todo done 1
-          todo edit 2 "Buy groceries and milk"
+          todo edit 2 Buy groceries and milk
 
         Important tasks appear first. Check the current list before using an index.
-        Quote task descriptions containing spaces. Add/delete accept one task at a time.
+        Quotes are optional. Put options before task text (before the index for edit).
+        All remaining words become the text. Use add -- to start text with a dash.
         Completed tasks go to YYYY/month/dd-MM (for example 2026/january/23-01).
-        Completion removes the task from the active list; use todo undo to reverse only the last completion.
+        Completion removes the task from the active list; use todo undo to reverse the last done or delete.
         Task changes save locally and request background sync; list never syncs.
         Run todo sync before listing when you need the latest remote tasks.
         Help does not create configuration or access the task repository.

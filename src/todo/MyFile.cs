@@ -102,10 +102,10 @@ public class MyFile(string fileName)
         return new TodoItem { Body = item.Body, Classification = item.Classification, Finished = item.Finished };
     }
 
-    public void Restore(TodoItem item, int index)
+    public void Restore(TodoItem item, int index, bool preserveFinished = false)
     {
         _todoItems.Insert(Math.Clamp(index - 1, 0, _todoItems.Count),
-            new TodoItem { Body = item.Body, Classification = item.Classification, Finished = false });
+            new TodoItem { Body = item.Body, Classification = item.Classification, Finished = preserveFinished && item.Finished });
         _todoItems = _todoItems.OrderBy(current => current.Classification).ToList();
     }
 

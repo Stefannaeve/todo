@@ -45,7 +45,7 @@ public static class ArgumentValidator
         if (command == Command.Edit)
         {
             if (values.Count != 2)
-                return "Expected one task index and one quoted replacement text. Use: todo edit <index> \"new text\"";
+                return "Expected one task index and replacement text. Use: todo edit <index> \"new text\"";
             if (!int.TryParse(values[0].Value, out int editIndex) || editIndex < 1)
                 return "Task index must be a positive whole number. Use: todo edit <index> \"new text\"";
             string? text = values[1].Value;
@@ -61,12 +61,14 @@ public static class ArgumentValidator
 
         if (values.Count != 1)
         {
-            return $"Expected exactly one {(command == Command.Add ? "task text (quote text containing spaces)" : "task index")}. {Usage(command)}";
+            return $"Expected exactly one {(command == Command.Add ? "task text" : "task index")}. {Usage(command)}";
         }
 
         if (command == Command.Add)
         {
-            return string.IsNullOrWhiteSpace(values[0].Value) ? "Task text cannot be empty. Use: todo add \"task text\"" : null;
+            string? text = values[0].Value;
+            return string.IsNullOrWhiteSpace(text) || text.Contains('\r') || text.Contains('\n')
+                ? "Task text must be nonblank and on one line. Use: todo add task text" : null;
         }
 
         return int.TryParse(values[0].Value, out int index) && index > 0

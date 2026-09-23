@@ -89,6 +89,12 @@ internal static class Program
                     return Error($"Task {value} does not exist. Use todo list to see available indices.");
             }
 
+            if (commandArgument.Command == Command.Delete && deleteAll && file.Count == 0)
+            {
+                Console.WriteLine("No active tasks to delete.");
+                return 0;
+            }
+
             CompletionUndo undo = new(config.TodoPath, git.MetadataPath);
             if (commandArgument.Command == Command.Undo) undo.Validate();
 
@@ -110,9 +116,9 @@ internal static class Program
                     Console.WriteLine($"Updated: {replacement}");
                     break;
                 case Command.Delete:
-                    if (deleteAll) file.DeleteAll();
-                    else file.Delete(index);
-                    file.Save();
+                    UndoEntry deleted = undo.Delete(file, index, deleteAll)!;
+                    Console.WriteLine(deleteAll ? $"Deleted {deleted.Deleted!.Count} tasks. Undo: todo undo"
+                        : $"Deleted: {deleted.Item.Body}\nUndo: todo undo");
                     break;
                 case Command.Done:
                     UndoEntry completed = undo.Complete(file, index, DateOnly.FromDateTime(DateTime.Now));
@@ -121,7 +127,9 @@ internal static class Program
                     break;
                 case Command.Undo:
                     UndoEntry restored = undo.Undo(file);
-                    Console.WriteLine($"Restored: {restored.Item.Body}");
+                    Console.WriteLine(restored.Deleted is { Count: > 1 }
+                        ? $"Restored {restored.Deleted.Count} deleted tasks."
+                        : $"Restored: {restored.Item.Body}");
                     break;
                 default:
                     throw new InvalidOperationException("Unsupported task command.");

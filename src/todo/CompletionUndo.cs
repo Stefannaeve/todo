@@ -3,7 +3,9 @@ using System.Text.Json;
 
 namespace todo;
 
-public sealed record UndoEntry(TodoItem Item, int Index, string ArchivePath, byte[] PreviousArchive, string ArchiveHash);
+public sealed record DeletedTask(TodoItem Item, int Index);
+public sealed record UndoEntry(TodoItem Item, int Index, string ArchivePath, byte[] PreviousArchive, string ArchiveHash,
+    List<DeletedTask>? Deleted = null);
 
 public sealed class CompletionUndo(string repoPath, string metadataPath)
 {
@@ -35,10 +37,40 @@ public sealed class CompletionUndo(string repoPath, string metadataPath)
         }
     }
 
+    public UndoEntry? Delete(MyFile file, int index, bool all)
+    {
+        if (all && file.Count == 0) return null;
+        List<DeletedTask> deleted = all
+            ? Enumerable.Range(1, file.Count).Select(number => new DeletedTask(file.GetItem(number), number)).ToList()
+            : [new DeletedTask(file.GetItem(index), index)];
+        byte[] beforeTasks = File.ReadAllBytes(TaskPath);
+        try
+        {
+            if (all) file.DeleteAll();
+            else file.Delete(index);
+            file.Save();
+            UndoEntry entry = new(deleted[0].Item, deleted[0].Index, "", [], "", deleted);
+            WriteAtomic(RecordPath, JsonSerializer.SerializeToUtf8Bytes(entry));
+            return entry;
+        }
+        catch
+        {
+            WriteAtomic(TaskPath, beforeTasks);
+            throw;
+        }
+    }
+
     public UndoEntry Validate()
     {
-        if (!File.Exists(RecordPath)) throw new InvalidDataException("No completed task to undo.");
+        if (!File.Exists(RecordPath)) throw new InvalidDataException("Nothing to undo. Complete or delete a task first.");
         UndoEntry? entry = JsonSerializer.Deserialize<UndoEntry>(File.ReadAllBytes(RecordPath));
+        if (entry?.Deleted is not null)
+        {
+            if (entry.Item is null || entry.Item.Body is null || entry.Deleted.Count == 0 || entry.Deleted.Any(task => task is null || task.Index < 1 ||
+                task.Item is null || task.Item.Body is null || task.Item.Classification is not (Classification.Regular or Classification.Important)))
+                throw new InvalidDataException("The last deletion record is invalid; no tasks were changed.");
+            return entry;
+        }
         if (entry is null || entry.Item is null || entry.Item.Body is null || entry.PreviousArchive is null ||
             entry.Index < 1 || entry.ArchivePath is null || !CompletionArchive.IsArchivePath(entry.ArchivePath) ||
             entry.Item.Classification is not (Classification.Regular or Classification.Important))
@@ -52,6 +84,23 @@ public sealed class CompletionUndo(string repoPath, string metadataPath)
     public UndoEntry Undo(MyFile file)
     {
         UndoEntry entry = Validate();
+        if (entry.Deleted is not null)
+        {
+            byte[] activeBefore = File.ReadAllBytes(TaskPath);
+            try
+            {
+                foreach (DeletedTask task in entry.Deleted.OrderBy(task => task.Index))
+                    file.Restore(task.Item, task.Index, preserveFinished: true);
+                file.Save();
+                File.Delete(RecordPath);
+                return entry;
+            }
+            catch
+            {
+                WriteAtomic(TaskPath, activeBefore);
+                throw;
+            }
+        }
         string archive = Path.Combine(repoPath, entry.ArchivePath);
         byte[] beforeArchive = File.ReadAllBytes(archive);
         byte[] beforeTasks = File.ReadAllBytes(TaskPath);

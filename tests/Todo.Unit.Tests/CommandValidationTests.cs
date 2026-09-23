@@ -10,7 +10,6 @@ public class CommandValidationTests
         yield return [new string[] { "add", "-i" }];
         yield return [new string[] { "add", "" }];
         yield return [new string[] { "add", "   " }];
-        yield return [new string[] { "add", "first", "second" }];
         yield return [new string[] { "delete" }];
         yield return [new string[] { "delete", "1", "2" }];
         yield return [new string[] { "delete", "--all", "1" }];
@@ -36,8 +35,6 @@ public class CommandValidationTests
         yield return [new string[] { "edit", "1", "   " }];
         yield return [new string[] { "edit", "1", "First\nSecond" }];
         yield return [new string[] { "edit", "1", "First\rSecond" }];
-        yield return [new string[] { "edit", "1", "Text", "Extra" }];
-        yield return [new string[] { "edit", "1", "Text", "-i" }];
         yield return [new string[] { "undo", "1" }];
         yield return [new string[] { "undo", "--all" }];
         yield return [new string[] { "sync", "--offline" }];

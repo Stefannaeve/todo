@@ -286,7 +286,7 @@ public sealed class GitSyncTests : IDisposable
     [InlineData("list", null)]
     public void OfflineFlagIsAccepted(string command, string? value)
     {
-        string[] args = value is null ? [command, "--offline"] : [command, value, "--offline"];
+        string[] args = value is null ? [command, "--offline"] : [command, "--offline", value];
         Assert.Contains(ArgumentParser.parseArgs(args).Arguments, argument => argument.ArgumentType == ArgumentType.Offline);
     }
 

@@ -96,7 +96,7 @@ public class MyFile(string fileName)
 
     public bool Delete(int index)
     {
-        if (index < 1 || index - 1 > _todoItems.Count)
+        if (index < 1 || index > _todoItems.Count)
         {
             return false;
         }
@@ -155,7 +155,7 @@ public class MyFile(string fileName)
 
     public bool ToggleFinished(int doneIndex)
     {
-        if (doneIndex < 1 || doneIndex - 1 > _todoItems.Count)
+        if (doneIndex < 1 || doneIndex > _todoItems.Count)
         {
             return false;
         }

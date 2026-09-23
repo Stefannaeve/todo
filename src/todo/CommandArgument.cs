@@ -4,33 +4,27 @@ namespace todo;
 
 public record CommandArgument(Command Command, List<Argument> Arguments);
 
+public sealed class CommandLineException(string message) : Exception(message);
+
 public static class ArgumentParser
 {
     public static CommandArgument parseArgs(string[] args)
     {
         Command command = args.Length == 0 ? Command.List : args[0].ToCommand();
-
-        if (command == Command.Unknown)
+        // Enum parsing also accepts numbers; commands must be named explicitly.
+        if (command == Command.Unknown ||
+            (args.Length > 0 && !string.Equals(args[0], command.ToString(), StringComparison.OrdinalIgnoreCase)))
         {
-            throw new InvalidOperationException("Could not parse Command");
+            throw new CommandLineException("Unknown command. Use add, delete, done, or list.");
         }
 
-        bool status = true;
-        List<Argument> terminalArguments = new List<Argument>();
-
-        if (args.Length > 1)
+        List<Argument> arguments = args.Length > 1 ? args[1..].GetArgumentType().ToList() : [];
+        string? error = ArgumentValidator.GetValidationError(command, arguments);
+        if (error is not null)
         {
-            terminalArguments = args[1..].GetArgumentType().ToList();
-            status = ArgumentValidator.validateArguments(command, terminalArguments);
+            throw new CommandLineException(error);
         }
 
-
-        // Make more explicit in the future
-        if (!status)
-        {
-            throw new InvalidOperationException("Invalid arguments");
-        }
-
-        return new CommandArgument(command, terminalArguments);
+        return new CommandArgument(command, arguments);
     }
 }

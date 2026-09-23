@@ -40,3 +40,6 @@ dotnet run --
 dnx stefan.todo --source ./nupkg -- add
 
 dnx = dotnet tool exec
+## Command validation
+
+`add` takes exactly one nonblank task description; quote descriptions containing spaces. `delete` takes one positive index or `--all`, and `done` takes one positive index (`done --all` is unsupported). `list` accepts `--info` and `--verbose`. Extra values, unsupported flags, and missing arguments produce an error on stderr and exit code 1 before setup or synchronization. An index outside the current list also exits with code 1 without saving task changes.

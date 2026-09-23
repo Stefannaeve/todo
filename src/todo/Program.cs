@@ -5,8 +5,18 @@ namespace todo;
 
 internal static class Program
 {
-    private static void Main(string[] args)
+    private static int Main(string[] args)
     {
+        CommandArgument commandArgument;
+        try
+        {
+            commandArgument = ArgumentParser.parseArgs(args);
+        }
+        catch (CommandLineException exception)
+        {
+            return Error(exception.Message);
+        }
+
         if (!ConfigHandler.ConfigExists())
         {
             ConfigHandler.CreateConfig();
@@ -19,8 +29,6 @@ internal static class Program
         {
             throw new InvalidOperationException("Config not found");
         }
-
-        CommandArgument commandArgument = ArgumentParser.parseArgs(args);
 
         Message.InfoEnabled = commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.Info);
         Message.VerboseEnabled =
@@ -88,7 +96,7 @@ internal static class Program
 
                 if (!myFile.Delete(deleteIndex))
                 {
-                    Message.Info($"Could not delete {deleteIndex}");
+                    return Error($"Task {deleteIndex} does not exist. Use todo list to see available indices.");
                 }
 
                 gitMessage = $"Deleted index {deleteIndex}";
@@ -108,7 +116,7 @@ internal static class Program
 
                 if (!myFile.ToggleFinished(doneIndex))
                 {
-                    Message.Info($"Could not finish {doneIndex}");
+                    return Error($"Task {doneIndex} does not exist. Use todo list to see available indices.");
                 }
 
                 gitMessage = $"Updated status of {doneIndex}";
@@ -117,8 +125,7 @@ internal static class Program
             case Command.List:
             {
                 myFile.WriteTodos();
-                Environment.Exit(0);
-                break;
+                return 0;
             }
             case Command.Unknown:
                 Message.Info($"Doesnt recognize condition {args[0]}");
@@ -129,6 +136,13 @@ internal static class Program
 
         myFile.Save();
         git.Push(gitMessage);
+        return 0;
+    }
+
+    private static int Error(string message)
+    {
+        Console.Error.WriteLine($"Error: {message}");
+        return 1;
     }
 
     static bool IsDevelopment()

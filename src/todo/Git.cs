@@ -6,6 +6,8 @@ namespace todo;
 
 public sealed class GitException(string message) : Exception(message);
 
+public sealed record GitSyncTarget(string Remote, string Branch, string LocalBranch);
+
 public class Git(string repoPath)
 {
     private (int ExitCode, string Output) RunProcess(params string[] arguments)
@@ -74,12 +76,22 @@ public class Git(string repoPath)
 
         foreach (string marker in new[] { "MERGE_HEAD", "CHERRY_PICK_HEAD", "REVERT_HEAD", "rebase-merge", "rebase-apply", "sequencer" })
         {
-            string path = RunProcess("rev-parse", "--git-path", marker).Output.Trim();
-            path = Path.GetFullPath(path, Path.GetFullPath(repoPath));
+            string path = Path.Combine(MetadataPath, marker);
             if (File.Exists(path) || Directory.Exists(path))
-            {
-                throw new GitException("A Git merge, rebase, or cherry-pick/revert is in progress. Complete or abort it manually before using todo, including --offline. No task changes were saved.");
-            }
+                throw new GitException("A Git operation is in progress. Complete or abort it manually before changing tasks.");
+        }
+    }
+
+    public string MetadataPath
+    {
+        get
+        {
+            string path = Path.Combine(Path.GetFullPath(repoPath), ".git");
+            if (!File.Exists(path)) return path;
+            string pointer = File.ReadAllText(path).Trim();
+            if (!pointer.StartsWith("gitdir: ", StringComparison.Ordinal))
+                throw new GitException("Invalid .git worktree pointer.");
+            return Path.GetFullPath(pointer[8..], Path.GetFullPath(repoPath));
         }
     }
 
@@ -109,21 +121,57 @@ public class Git(string repoPath)
         }
 
         (string Remote, string Branch) target = TrackingTarget();
-        // Include archives completed offline, while excluding unrelated repository files.
-        string[] paths = RunProcess("ls-files", "--modified", "--deleted", "--others", "-z").Output
-            .Split('\0', StringSplitOptions.RemoveEmptyEntries)
-            .Where(CompletionArchive.IsArchivePath)
-            .Concat(RunProcess("diff", "--cached", "--name-only", "-z").Output
-                .Split('\0', StringSplitOptions.RemoveEmptyEntries).Where(CompletionArchive.IsArchivePath))
-            .Prepend("todo.txt").Distinct(StringComparer.Ordinal).ToArray();
-        RunProcess(["add", "--", .. paths]);
-        if (RunProcess(["diff", "--cached", "--quiet", "--", .. paths]).ExitCode == 1)
-        {
-            RunProcess(["commit", "-m", commitMessage, "--", .. paths]);
-        }
+        CommitPending(commitMessage);
         // Use the same upstream as Pull, regardless of push.default or pushRemote.
         RunProcess("push", "--", target.Remote, $"HEAD:{target.Branch}");
     }
+
+    private static bool IsTaskPath(string path) => path == "todo.txt" || CompletionArchive.IsArchivePath(path);
+
+    private string[] PendingPaths()
+    {
+        return RunProcess("ls-files", "--modified", "--deleted", "--others", "-z").Output
+            .Split('\0', StringSplitOptions.RemoveEmptyEntries)
+            .Where(IsTaskPath)
+            .Concat(RunProcess("diff", "--cached", "--name-only", "-z").Output
+                .Split('\0', StringSplitOptions.RemoveEmptyEntries).Where(IsTaskPath))
+            .Distinct(StringComparer.Ordinal).ToArray();
+    }
+
+    public bool HasPendingChanges() => PendingPaths().Length > 0;
+
+    public void CommitPending(string message)
+    {
+        string[] paths = PendingPaths();
+        if (paths.Length == 0) return;
+        RunProcess(["add", "--", .. paths]);
+        if (RunProcess(["diff", "--cached", "--quiet", "--", .. paths]).ExitCode == 1)
+            RunProcess(["commit", "-m", message, "--", .. paths]);
+    }
+
+    public GitSyncTarget? PrepareSync()
+    {
+        EnsureNoConflicts();
+        if (!HasRemote()) return null;
+        (string Remote, string Branch) target = TrackingTarget();
+        return new GitSyncTarget(target.Remote, target.Branch, RunProcess("symbolic-ref", "--quiet", "HEAD").Output.Trim());
+    }
+
+    public void EnsureTargetUnchanged(GitSyncTarget expected)
+    {
+        if (PrepareSync() != expected)
+            throw new GitException("The Git branch or upstream changed during synchronization. Run todo sync again.");
+    }
+
+    public string Fetch(GitSyncTarget target)
+    {
+        RunProcess("fetch", "--", target.Remote, target.Branch);
+        return RunProcess("rev-parse", "FETCH_HEAD").Output.Trim();
+    }
+
+    public void Integrate(string commit) => RunProcess("merge", "--ff-only", "--no-autostash", "--", commit);
+    public string Head() => RunProcess("rev-parse", "HEAD").Output.Trim();
+    public void PushCommit(GitSyncTarget target, string commit) => RunProcess("push", "--", target.Remote, $"{commit}:{target.Branch}");
 
     public void Pull()
     {

@@ -155,6 +155,130 @@ public sealed class GitSyncTests : IDisposable
         Assert.Contains("Keep archived task", File.ReadAllText(Path.Combine(Local, "2026/january/23-01")));
     }
 
+    [Fact]
+    public void CoordinatorSynchronizesLocalDataAndRecordsSuccess()
+    {
+        SyncCoordinator sync = new(Local);
+        using (FileStream fileLock = sync.LockFiles())
+        {
+            sync.MarkPending(requestSync: true);
+            File.WriteAllText(Path.Combine(Local, "todo.txt"), "Regular _: Queued task\n");
+        }
+        Assert.True(sync.Synchronize(background: false));
+        SyncState state = sync.ReadState();
+        Assert.Equal(state.Revision, state.SyncedRevision);
+        Assert.Equal(state.Request, state.CompletedRequest);
+        Assert.NotNull(state.LastSuccess);
+        Assert.Null(state.LastError);
+        Assert.Contains("Queued task", Run(Remote, "show", "main:todo.txt"));
+    }
+
+    [Fact]
+    public void ManualSyncFastForwardsRemoteTasksWithoutLocalEdits()
+    {
+        Commit(Other, "todo.txt", "Regular _: Remote task\n", "Remote task");
+        Run(Other, "push");
+        SyncCoordinator sync = new(Local);
+        long request = sync.RequestSync();
+
+        Assert.True(sync.Synchronize(background: false, requested: request));
+
+        Assert.Equal("Regular _: Remote task\n", File.ReadAllText(Path.Combine(Local, "todo.txt")));
+        Assert.Null(sync.ReadState().LastError);
+    }
+
+    [Fact]
+    public void CoordinatorRetainsRequestsAndDataAfterFailureThenRetries()
+    {
+        SyncCoordinator sync = new(Local);
+        using (FileStream fileLock = sync.LockFiles())
+        {
+            sync.MarkPending(requestSync: true);
+            File.WriteAllText(Path.Combine(Local, "todo.txt"), "Regular _: Durable task\n");
+        }
+        Run(Local, "remote", "set-url", "origin", Path.Combine(_root, "unavailable.git"));
+
+        Assert.False(sync.Synchronize(background: true));
+        SyncState failed = new SyncCoordinator(Local).ReadState();
+        Assert.NotNull(failed.LastError);
+        Assert.True(failed.Request > failed.CompletedRequest);
+        Assert.Contains("Durable task", Run(Local, "show", "HEAD:todo.txt"));
+
+        Run(Local, "remote", "set-url", "origin", Remote);
+        long request = sync.RequestSync();
+        Assert.True(sync.Synchronize(background: false, requested: request));
+        Assert.Null(sync.ReadState().LastError);
+        Assert.Contains("Durable task", Run(Remote, "show", "main:todo.txt"));
+    }
+
+    [Fact]
+    public void CoordinatorPreservesDivergedHistoriesAndReportsFailure()
+    {
+        File.WriteAllText(Path.Combine(Local, "todo.txt"), "Regular _: Local task\n");
+        Commit(Other, "todo.txt", "Regular _: Remote task\n", "Remote task");
+        Run(Other, "push");
+        SyncCoordinator sync = new(Local);
+        sync.RequestSync();
+
+        Assert.False(sync.Synchronize(background: true));
+
+        Assert.Equal("Regular _: Local task\n", File.ReadAllText(Path.Combine(Local, "todo.txt")));
+        Assert.Equal("Regular _: Remote task", Run(Remote, "show", "main:todo.txt").Trim());
+        Assert.NotNull(sync.ReadState().LastError);
+        Assert.False(File.Exists(Path.Combine(Local, ".git", "MERGE_HEAD")));
+    }
+
+    [Fact]
+    public void OfflineMarkerDoesNotRequestAWorkerButExplicitSyncIncludesIt()
+    {
+        SyncCoordinator sync = new(Local);
+        using (FileStream fileLock = sync.LockFiles())
+        {
+            sync.MarkPending(requestSync: false);
+            File.WriteAllText(Path.Combine(Local, "todo.txt"), "Regular _: Offline task\n");
+        }
+        Assert.Equal(0, sync.ReadState().Request);
+        Assert.Equal(1, sync.ReadState().Revision);
+        Assert.False(sync.IsRunning());
+        long request = sync.RequestSync();
+        Assert.True(sync.Synchronize(background: false, requested: request));
+        Assert.Contains("Offline task", Run(Remote, "show", "main:todo.txt"));
+    }
+
+    [Fact]
+    public void SeparateWorkerSurvivesClosedConsoleAndSynchronizesPendingRequest()
+    {
+        SyncCoordinator sync = new(Local);
+        using (FileStream fileLock = sync.LockFiles())
+        {
+            sync.MarkPending(requestSync: true);
+            File.WriteAllText(Path.Combine(Local, "todo.txt"), "Regular _: Background task\n");
+        }
+        using Process worker = new();
+        worker.StartInfo.FileName = "dotnet";
+        worker.StartInfo.ArgumentList.Add(typeof(Git).Assembly.Location);
+        worker.StartInfo.ArgumentList.Add("--sync-worker");
+        worker.StartInfo.ArgumentList.Add(Local);
+        worker.StartInfo.RedirectStandardInput = true;
+        worker.StartInfo.RedirectStandardOutput = true;
+        worker.StartInfo.RedirectStandardError = true;
+        worker.Start();
+        worker.StandardInput.Close();
+        worker.StandardOutput.Close();
+        worker.StandardError.Close();
+        if (!worker.WaitForExit(15_000))
+        {
+            worker.Kill(entireProcessTree: true);
+            worker.WaitForExit();
+            Assert.Fail("Background worker did not finish.");
+        }
+        Assert.Equal(0, worker.ExitCode);
+        Assert.NotNull(sync.ReadState().LastSuccess);
+        Assert.Equal(sync.ReadState().Request, sync.ReadState().CompletedRequest);
+        Assert.Contains("Background task", Run(Remote, "show", "main:todo.txt"));
+        Assert.False(sync.IsRunning());
+    }
+
     [Theory]
     [InlineData("add", "Task")]
     [InlineData("delete", "1")]

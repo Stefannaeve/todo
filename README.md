@@ -51,7 +51,7 @@ If installation says the tool is already installed, see **Updating or removing t
 todo
 ```
 
-An empty list is expected. This first run creates the configuration, task directory, local Git repository, and `todo.txt` file automatically. You do not need a Git account, Git identity, or remote repository for local use.
+An empty list is expected. This first run creates the configuration, task directory, and local Git repository automatically. The task file is created when you first add a task. You do not need a Git account, Git identity, or remote repository for local use.
 
 You can now skip to **Your first tasks**, or connect your task repository below. Connect the repository before adding tasks if you want those tasks stored there; switching the configuration later does not move tasks from the default location.
 
@@ -127,13 +127,14 @@ On macOS, a typical value is `/Users/alex/my-tasks`. On Windows, use forward sla
 
 Use your actual path, keep the quotes and braces, and save the file. Do not use `~` or environment variables inside the JSON; the app expects the full folder path. Point to the folder, not to `todo.txt` itself.
 
-Finally, run:
+Finally, synchronize once and list your tasks:
 
 ```sh
+todo sync
 todo
 ```
 
-The app now reads from your chosen task repository. It pulls before reading tasks and commits/pushes task changes automatically. Existing tasks must use this app's text format, for example `Regular _: Buy groceries` or `Important x: Finished task`; arbitrary text or Markdown task lists are not supported.
+The app now reads from your chosen local task repository. Task changes save immediately and request background synchronization. Listing tasks never contacts the remote; run `todo sync` first when you need the latest remote changes. Existing tasks must use this app's text format, for example `Regular _: Buy groceries` or `Important x: Finished task`; arbitrary text or Markdown task lists are not supported.
 
 ### 5. Your first tasks
 
@@ -156,14 +157,16 @@ todo
 
 | What you want to do | Command |
 | --- | --- |
-| List tasks | `todo` or `todo list` |
+| List local tasks | `todo` or `todo list` |
 | Add a task | `todo add "Task description"` |
 | Add an important task | `todo add -i "Task description"` |
 | Complete and archive a task | `todo done 1` |
 | Delete one task | `todo delete 1` |
 | Delete **all** tasks, without a confirmation prompt | `todo delete --all` |
-| Read tasks without contacting the remote | `todo list --offline` |
-| Add a task locally without synchronizing | `todo add "Task description" --offline` |
+| Synchronize now and wait for completion | `todo sync` |
+| Check pending changes and synchronization errors | `todo status` |
+| Read tasks without contacting the remote | `todo list` |
+| Add a task without requesting background sync | `todo add "Task description" --offline` |
 | Show diagnostic output | `todo list --verbose` |
 
 Quote task descriptions containing spaces. Adding or deleting multiple tasks in one command is not supported.
@@ -197,7 +200,7 @@ Regular x: Buy groceries
 
 Active tasks are still stored in `todo.txt`. `todo delete` only removes active tasks; it does not delete your completion history. Existing tasks marked `x` in `todo.txt` are not migrated automatically, because their original completion dates are unknown; using `done` on one archives it under today's date.
 
-With synchronization enabled, the active list and pending archive files are committed and pushed together. `todo done 1 --offline` performs the same move locally without committing or pushing; a later successful modifying command includes the pending archives when it synchronizes. Merely listing tasks does not push offline changes. Keep dated archives out of `.gitignore`, so Git can track your completion history. Files matching the `yyyy/month/dd-MM` archive layout are treated as task data; other repository files are excluded from task commits.
+The background worker commits the active list and pending archive files together before synchronizing. `todo done 1 --offline` performs the same move without requesting a worker; a later `todo sync` or modifying command includes pending archives. Merely listing tasks does not request synchronization. Keep dated archives out of `.gitignore`, so Git can track your completion history. Files matching the `yyyy/month/dd-MM` archive layout are treated as task data; other repository files are excluded from task commits.
 
 If the archive cannot be written, the task stays active. Completion also stops when `todo.txt` has malformed lines, so it cannot silently discard them. `done` is no longer a completion toggle: running it again on the same number may complete the next task now occupying that position.
 
@@ -219,11 +222,11 @@ $env:Path += ";$env:USERPROFILE\.dotnet\tools"
 
 For a permanent fix, add the same folder to your user PATH on Windows, or put the `export` line in `~/.bashrc` (Bash) or `~/.zshrc` (Zsh). See Microsoft's [global tool installation documentation](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-tool-install).
 
-**Git authentication or connection fails.** From your `my-tasks` folder, check `git fetch` and `git push --dry-run`. Fix the credentials or connection there, or explicitly use `--offline` to work with the local list. Offline changes are saved but not committed or pushed.
+**Git authentication or connection fails.** Task changes are still saved locally. Run `todo status` to read the last error, fix authentication or connectivity with Git, then run `todo sync`. Another modifying command also requests a new attempt. A failed worker exits; there is no periodic retry loop.
 
-**The app reports conflicts or diverged history.** Resolve the repository with Git before resuming synchronization. Existing conflicts or unfinished Git operations block task commands even offline. The app will not merge or reset your data automatically.
+**The app reports conflicts or diverged history.** Local tasks and commits are retained. Reconcile the repository with Git, then run `todo sync`. Check `todo status` and wait for an active worker to finish before performing manual Git operations. Existing conflicts or unfinished Git operations block task modifications, including offline modifications, but you can still inspect the local list. The app never force-pushes, resets, or automatically resolves conflicts.
 
-**The app says tasks were saved locally but synchronization failed.** Do not repeat the task command: an addition could be duplicated, or a different task completed. Fix the reported Git problem and synchronize the saved changes manually. See the failure policy below.
+**A task command succeeded, but its changes are not on the remote.** Success means the local files were saved; background synchronization may still be running or may have failed. Use `todo status` for details or `todo sync` to wait for a result. Do not repeat the task operation just to retry synchronization: it could duplicate an addition or complete the next task at the same index.
 
 ## Updating or removing the app
 
@@ -260,12 +263,16 @@ Running from source uses the same configuration as the installed tool unless you
 
 `add` takes exactly one nonblank task description; quote descriptions containing spaces. `delete` takes one positive index or `--all`, and `done` takes one positive index (`done --all` is unsupported). `list` accepts `--info` and `--verbose`. Extra values, unsupported flags, and missing arguments produce an error on stderr and exit code 1 before setup or synchronization. An index outside the current list also exits with code 1 without saving task changes.
 
-## Offline use and synchronization failures
+## Local commands and background synchronization
 
-- Without a remote, tasks remain local; no identity, commits, pulls, or pushes are required.
-- With a remote, normal commands pull from the current branch's upstream before reading tasks. Pulls are fast-forward only, even when your Git configuration requests a rebase. A failed pull stops the command before applying task changes; the tool never automatically falls back to a stale local list.
-- Use `todo list --offline` or `todo add "A local task" --offline` to explicitly skip pull, commit, and push. Offline writes are saved in `todo.txt` and, for completed tasks, the dated archive; they remain uncommitted. No remote or upstream is required for this mode. Git must still be installed.
-- A diverged branch is left for you to reconcile with Git. An existing conflict or in-progress merge/rebase/cherry-pick/revert blocks all task commands, even offline, so the tool cannot rewrite conflict markers or pending resolutions. There are no automatic resets, stashes, conflict resolutions, or force pushes.
-- Changes stage and commit `todo.txt` and pending dated archive files together, including new files and archives created offline. Unrelated staged files are left out of the commit. Push targets the same upstream branch used by pull.
-- If staging, committing, or pushing fails after a save, the task file is retained and the error explicitly says it was saved locally. Do not repeat the task command, as that could duplicate an addition or complete a different task. Correct the reported problem and synchronize manually. After a failed push, the local commit remains; retry pushing to the configured upstream after resolving the failure. After a failed commit or offline edits, commit the task file and any dated archives together first and reconcile any remote changes before pushing.
-- A remote without a configured upstream requires Git setup before normal commands can run; `--offline` remains available. Git credential prompts are disabled, and each Git subprocess has a 30-second timeout so synchronization cannot hang indefinitely.
+- `todo`, `todo list`, and `todo status` use local data and never fetch or push. On a fresh install, an empty local list is expected. Remote changes appear after a successful background sync or an explicit `todo sync`.
+- `todo add`, `todo done`, and `todo delete` save locally before returning, then launch a separate background process. It keeps running after the command exits and is detached from the terminal. Closing the terminal does not intentionally cancel it; shutting down the machine stops it, but the saved files and pending request remain.
+- The worker waits about half a second to group nearby changes. Only one worker synchronizes a given task repository at a time. Task-file operations use a separate lock, held only during local reads, writes, commits, and fast-forward updates. Fetch and push do not hold that lock, so network latency does not block local commands. A slow local Git hook can still delay local file access.
+- `todo sync` waits for synchronization to finish and returns exit code 1 if it fails. If a running worker services the request successfully, the command reuses that result. Otherwise it performs synchronization itself. It commits pending task/archive changes, fetches the upstream, fast-forwards when possible, and pushes the captured commit. Edits made during network operations remain safe; newly requested changes trigger another pass.
+- `todo status` reports whether a worker is running, whether app changes are pending, the last successful sync time, and the last error. Status uses local Git state; it cannot tell whether the remote has changed without synchronizing. Sync state and lock files live under `.git/todo-sync` (or the worktree's Git metadata directory), not in tracked task files.
+- `--offline` on a modifying command saves locally without requesting a new background sync. It does not cancel a worker that is already running; that worker may include concurrent edits. A later modifying command or `todo sync` includes all pending task data. For list, `--offline` is accepted for compatibility but is unnecessary. `todo sync --offline` is rejected.
+- Without a Git remote, tasks stay local and do not require a Git identity. With a remote, configure authentication, identity, and the branch upstream. Git credential prompts are disabled, and each Git subprocess has a 30-second timeout.
+- Synchronization stages and commits only `todo.txt` and recognized dated archives, including previously untracked files and offline completions. Unrelated staged files are preserved. The fetch and push target the same upstream branch.
+- Fetch or push failures are recorded for `todo status`; subsequent listings also show a short warning. Local task files and any local commits are retained. Fix the problem and use `todo sync`, or make another task change to request a retry. There is no persistent daemon or scheduled retry when no commands are being used.
+- The existing fast-forward-only policy remains. If local and remote branches have both advanced, synchronization reports divergence and leaves reconciliation to you, even if a merge might be possible. There are no automatic merges, rebases, stashes, resets, or force pushes.
+- Requests are persisted before changing task files, and OS-held locks are released if a worker exits or crashes. After restarting the computer or recovering from a worker failure, run `todo sync` to retry pending work. Synchronization failures never require repeating the original add/delete/done command.

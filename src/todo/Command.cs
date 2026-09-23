@@ -6,5 +6,7 @@ public enum Command
     Add,
     Delete,
     Done,
-    List
+    List,
+    Sync,
+    Status
 }

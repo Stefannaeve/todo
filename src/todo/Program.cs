@@ -1,4 +1,5 @@
-﻿using todo.Extensions;
+using System.Text.Json;
+using todo.Extensions;
 using todo.HelperClasses;
 
 namespace todo;
@@ -9,19 +10,13 @@ internal static class Program
     {
         try
         {
+            if (args.Length == 2 && args[0] == "--sync-worker")
+                return SyncCoordinator.RunWorker(args[1]);
             return Run(args);
         }
-        catch (GitException exception)
+        catch (Exception exception) when (exception is GitException or IOException or UnauthorizedAccessException or JsonException)
         {
             return Error(exception.Message);
-        }
-        catch (IOException exception)
-        {
-            return Error($"Could not save or read task files: {exception.Message}");
-        }
-        catch (UnauthorizedAccessException exception)
-        {
-            return Error($"Cannot access task files: {exception.Message}");
         }
     }
 
@@ -43,155 +38,84 @@ internal static class Program
             return Error(exception.Message);
         }
 
-        if (!ConfigHandler.ConfigExists())
-        {
-            ConfigHandler.CreateConfig();
-        }
-
-
-        Config? config = IsDevelopment() ? new Config("todo.txt") : ConfigHandler.LoadConfig();
-
-        if (config == null)
-        {
-            throw new InvalidOperationException("Config not found");
-        }
-
+        if (!ConfigHandler.ConfigExists()) ConfigHandler.CreateConfig();
+        Config config = IsDevelopment() ? new Config("todo.txt") : ConfigHandler.LoadConfig()
+            ?? throw new InvalidOperationException("Config not found");
         Message.InfoEnabled = commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.Info);
-        Message.VerboseEnabled =
-            commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.Verbose);
+        Message.VerboseEnabled = commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.Verbose);
 
-        Git git = new Git(config.TodoPath);
-
+        Git git = new(config.TodoPath);
         git.EnsureInitialized();
+        SyncCoordinator sync = new(config.TodoPath);
+        if (commandArgument.Command == Command.Sync)
+        {
+            long request = sync.RequestSync();
+            if (!sync.Synchronize(background: false, requested: request)) return 1;
+            using FileStream statusLock = sync.LockFiles();
+            Console.WriteLine(sync.ReadState().Note);
+            return 0;
+        }
+        if (commandArgument.Command == Command.Status)
+        {
+            sync.PrintStatus();
+            return 0;
+        }
+
         bool offline = commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.Offline);
-        if (offline)
+        using (FileStream fileLock = sync.LockFiles())
         {
-            git.EnsureNoConflicts();
-            Console.Error.WriteLine("Offline mode: using local tasks; Git synchronization is skipped.");
-        }
-        else
-        {
-            git.Pull();
-        }
-
-        Message.Debug(commandArgument.Command.ToString());
-        MyFile myFile = new MyFile(Path.Combine(config.TodoPath, "todo.txt"));
-        myFile.ParseFile();
-
-        if (myFile.ParseErrors.Count > 0 && commandArgument.Command == Command.Done)
-        {
-            return Error("Cannot archive tasks while todo.txt contains invalid lines. Fix those lines first; no tasks were changed.");
-        }
-
-        if (myFile.ParseErrors.Count > 0)
-        {
-            foreach (ParseError parseError in myFile.ParseErrors)
+            MyFile file = new(Path.Combine(config.TodoPath, "todo.txt"));
+            if (File.Exists(Path.Combine(config.TodoPath, "todo.txt"))) file.ParseFile();
+            if (commandArgument.Command == Command.List)
             {
-                Message.Info($"{parseError.Message} at line: {parseError.LineIndex}. this line will be deleted");
-            }
-        }
-
-        string gitMessage = "";
-
-        switch (commandArgument.Command)
-        {
-            case Command.Add:
-                Message.ExtraInfo("Doing Adding");
-                string? body = commandArgument.Arguments
-                    .Where(argument => argument.ArgumentType == ArgumentType.Value)
-                    .Select(argument => argument.Value)
-                    .FirstOrDefault();
-                if (body == null)
-                {
-                    throw new InvalidOperationException("The body of Add command is null");
-                }
-
-                Classification classification =
-                    commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.Important)
-                        ? Classification.Important
-                        : Classification.Regular;
-
-                myFile.Append(classification, body);
-                gitMessage = $"Added new Todo";
-                break;
-
-            case Command.Delete:
-                if (commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.All))
-                {
-                    myFile.DeleteAll();
-                    gitMessage = "Removed all todos";
-                    break;
-                }
-
-                string? value = commandArgument.Arguments.Where(argument => argument.ArgumentType == ArgumentType.Value)
-                    .Select(argument => argument.Value)
-                    .FirstOrDefault();
-
-                if (!int.TryParse(value, out int deleteIndex))
-                {
-                    throw new InvalidOperationException("Could not parse argument into int in delete");
-                }
-
-                Message.ExtraInfo("Doing Delete");
-
-                if (!myFile.Delete(deleteIndex))
-                {
-                    return Error($"Task {deleteIndex} does not exist. Use todo list to see available indices.");
-                }
-
-                gitMessage = $"Deleted index {deleteIndex}";
-                break;
-
-            case Command.Done:
-            {
-                string? doneValue = commandArgument.Arguments
-                    .Where(argument => argument.ArgumentType == ArgumentType.Value)
-                    .Select(argument => argument.Value)
-                    .FirstOrDefault();
-
-                if (!int.TryParse(doneValue, out int doneIndex))
-                {
-                    throw new InvalidOperationException("Could not parse done index");
-                }
-
-                string? archivePath = myFile.Complete(doneIndex, DateOnly.FromDateTime(DateTime.Now));
-                if (archivePath is null)
-                {
-                    return Error($"Task {doneIndex} does not exist. Use todo list to see available indices.");
-                }
-
-                Console.WriteLine($"Completed task {doneIndex}; archived in {archivePath}.");
-                gitMessage = $"Completed task {doneIndex} in {archivePath}";
-                break;
-            }
-            case Command.List:
-            {
-                myFile.WriteTodos();
+                file.WriteTodos();
+                if (file.ParseErrors.Count > 0)
+                    Console.Error.WriteLine("Some task lines could not be read. Fix todo.txt before changing tasks.");
+                if (sync.ReadState().LastError is not null)
+                    Console.Error.WriteLine("The last sync failed. Showing local tasks; run todo status for details.");
                 return 0;
             }
-            case Command.Unknown:
-                Message.Info($"Doesnt recognize condition {args[0]}");
-                break;
-            default:
-                throw new ArgumentOutOfRangeException();
+
+            git.EnsureNoConflicts();
+            if (file.ParseErrors.Count > 0)
+                return Error("Cannot change tasks while todo.txt contains invalid lines. Fix those lines first; no tasks were changed.");
+
+            string? value = commandArgument.Arguments.FirstOrDefault(argument => argument.ArgumentType == ArgumentType.Value)?.Value;
+            bool deleteAll = commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.All);
+            int index = 0;
+            if (commandArgument.Command == Command.Done || (commandArgument.Command == Command.Delete && !deleteAll))
+            {
+                if (!int.TryParse(value, out index) || index < 1 || index > file.Count)
+                    return Error($"Task {value} does not exist. Use todo list to see available indices.");
+            }
+
+            // Persist the request before saving, so termination cannot lose the sync request.
+            sync.MarkPending(requestSync: !offline);
+            switch (commandArgument.Command)
+            {
+                case Command.Add:
+                    Classification classification = commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.Important)
+                        ? Classification.Important : Classification.Regular;
+                    file.Append(classification, value!);
+                    file.Save();
+                    break;
+                case Command.Delete:
+                    if (deleteAll) file.DeleteAll();
+                    else file.Delete(index);
+                    file.Save();
+                    break;
+                case Command.Done:
+                    string? archive = file.Complete(index, DateOnly.FromDateTime(DateTime.Now));
+                    Console.WriteLine($"Completed task {index}; archived in {archive}.");
+                    break;
+                default:
+                    throw new InvalidOperationException("Unsupported task command.");
+            }
+            if (sync.ReadState().LastError is not null)
+                Console.Error.WriteLine("Saved locally. The last sync failed; run todo status for details.");
         }
 
-        // Complete saves the archive and active list together before returning.
-        if (commandArgument.Command != Command.Done)
-        {
-            myFile.Save();
-        }
-        if (!offline)
-        {
-            try
-            {
-                git.Push(gitMessage);
-            }
-            catch (GitException exception)
-            {
-                return Error($"Tasks were saved locally, but synchronization failed. {exception.Message}\nDo not repeat the task command: it has already been applied. Fix the Git problem and synchronize the saved changes manually.");
-            }
-        }
+        if (!offline) sync.StartBackground();
         return 0;
     }
 
@@ -201,10 +125,6 @@ internal static class Program
         return 1;
     }
 
-    static bool IsDevelopment()
-    {
-        string? env = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
-
-        return string.Equals(env, "Development", StringComparison.OrdinalIgnoreCase);
-    }
+    private static bool IsDevelopment() =>
+        string.Equals(Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT"), "Development", StringComparison.OrdinalIgnoreCase);
 }

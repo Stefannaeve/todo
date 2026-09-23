@@ -9,6 +9,7 @@ public class MyFile(string fileName)
 {
     private List<TodoItem> _todoItems = [];
     private readonly Parser _parser = new();
+    public int Count => _todoItems.Count;
     public IReadOnlyCollection<ParseError> ParseErrors => _parser.ParseErrors;
 
     public void ParseFile()

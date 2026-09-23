@@ -10,6 +10,8 @@ public static class ArgumentValidator
         { Command.Delete, [ArgumentType.All, ArgumentType.Info, ArgumentType.Verbose, ArgumentType.Offline, ArgumentType.Value] },
         { Command.Done, [ArgumentType.Info, ArgumentType.Verbose, ArgumentType.Offline, ArgumentType.Value] },
         { Command.List, [ArgumentType.Info, ArgumentType.Verbose, ArgumentType.Offline] },
+        { Command.Sync, [ArgumentType.Info, ArgumentType.Verbose] },
+        { Command.Status, [ArgumentType.Info, ArgumentType.Verbose] },
     };
 
     public static bool validateArguments(Command command, List<Argument> arguments) =>
@@ -19,7 +21,7 @@ public static class ArgumentValidator
     {
         if (!Rules.TryGetValue(command, out List<ArgumentType>? allowed))
         {
-            return "Unknown command. Use add, delete, done, or list.";
+            return "Unknown command. Use add, delete, done, list, sync, or status.";
         }
 
         if (command == Command.Done && arguments.Any(argument => argument.ArgumentType == ArgumentType.All))
@@ -33,7 +35,7 @@ public static class ArgumentValidator
         }
 
         List<Argument> values = arguments.Where(argument => argument.ArgumentType == ArgumentType.Value).ToList();
-        if (command == Command.List)
+        if (command is Command.List or Command.Sync or Command.Status)
         {
             return null;
         }
@@ -63,6 +65,8 @@ public static class ArgumentValidator
         Command.Add => "Use: todo add [-i] \"task text\"",
         Command.Delete => "Use: todo delete <index> or todo delete --all",
         Command.Done => "Use: todo done <index>",
+        Command.Sync => "Use: todo sync [--verbose]",
+        Command.Status => "Use: todo status",
         _ => "Use: todo list [--info] [--verbose]",
     };
 }

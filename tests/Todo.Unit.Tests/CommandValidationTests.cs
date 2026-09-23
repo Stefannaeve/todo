@@ -26,6 +26,9 @@ public class CommandValidationTests
         yield return [new string[] { "unknown" }];
         yield return [new string[] { "2" }];
         yield return [new string[] { "99" }];
+        yield return [new string[] { "sync", "--offline" }];
+        yield return [new string[] { "sync", "extra" }];
+        yield return [new string[] { "status", "extra" }];
     }
 
     [Theory]
@@ -38,6 +41,9 @@ public class CommandValidationTests
 
     [Theory]
     [InlineData(new string[] { }, Command.List)]
+    [InlineData(new string[] { "sync" }, Command.Sync)]
+    [InlineData(new string[] { "sync", "--verbose" }, Command.Sync)]
+    [InlineData(new string[] { "status" }, Command.Status)]
     [InlineData(new string[] { "list", "--verbose" }, Command.List)]
     [InlineData(new string[] { "list", "--info", "-v" }, Command.List)]
     [InlineData(new string[] { "ADD", "-i", "A task with spaces" }, Command.Add)]

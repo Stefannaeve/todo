@@ -15,7 +15,7 @@ public static class ArgumentParser
         if (command == Command.Unknown ||
             (args.Length > 0 && !string.Equals(args[0], command.ToString(), StringComparison.OrdinalIgnoreCase)))
         {
-            throw new CommandLineException("Unknown command. Use add, delete, done, or list.");
+            throw new CommandLineException("Unknown command. Use add, delete, done, list, sync, or status.");
         }
 
         List<Argument> arguments = args.Length > 1 ? args[1..].GetArgumentType().ToList() : [];

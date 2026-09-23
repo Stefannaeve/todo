@@ -2,6 +2,14 @@
 
 A small command-line task manager. Add tasks, mark important ones, check them off, and optionally keep them synchronized through your own Git repository.
 
+## Command-line help
+
+Run `todo -h`, `todo -help`, or `todo --help` to see the available commands, options, and examples. Help works before first-run setup and does not read configuration, change tasks, or contact Git.
+
+```sh
+todo -h
+```
+
 ## Getting started
 
 Follow steps 1–3 to use the app locally. Continue with step 4 if you have a Git repository where you want to store your tasks.

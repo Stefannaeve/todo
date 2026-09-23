@@ -19,6 +19,12 @@ internal static class Program
 
     private static int Run(string[] args)
     {
+        if (Help.IsRequested(args))
+        {
+            Console.WriteLine(Help.Text);
+            return 0;
+        }
+
         CommandArgument commandArgument;
         try
         {

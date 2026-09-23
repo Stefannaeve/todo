@@ -14,7 +14,7 @@ internal static class Program
                 return SyncCoordinator.RunWorker(args[1]);
             return Run(args);
         }
-        catch (Exception exception) when (exception is GitException or IOException or UnauthorizedAccessException or JsonException)
+        catch (Exception exception) when (exception is GitException or InvalidDataException or IOException or UnauthorizedAccessException or JsonException)
         {
             return Error(exception.Message);
         }
@@ -89,6 +89,9 @@ internal static class Program
                     return Error($"Task {value} does not exist. Use todo list to see available indices.");
             }
 
+            CompletionUndo undo = new(config.TodoPath, git.MetadataPath);
+            if (commandArgument.Command == Command.Undo) undo.Validate();
+
             // Persist the request before saving, so termination cannot lose the sync request.
             sync.MarkPending(requestSync: !offline);
             switch (commandArgument.Command)
@@ -105,8 +108,13 @@ internal static class Program
                     file.Save();
                     break;
                 case Command.Done:
-                    string? archive = file.Complete(index, DateOnly.FromDateTime(DateTime.Now));
-                    Console.WriteLine($"Completed task {index}; archived in {archive}.");
+                    UndoEntry completed = undo.Complete(file, index, DateOnly.FromDateTime(DateTime.Now));
+                    Console.WriteLine($"Completed: {completed.Item.Body}");
+                    Console.WriteLine($"Archived in {completed.ArchivePath}. Undo: todo undo");
+                    break;
+                case Command.Undo:
+                    UndoEntry restored = undo.Undo(file);
+                    Console.WriteLine($"Restored: {restored.Item.Body}");
                     break;
                 default:
                     throw new InvalidOperationException("Unsupported task command.");

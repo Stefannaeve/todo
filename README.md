@@ -153,7 +153,7 @@ todo done 1
 todo
 ```
 
-`done` completes the task, removes it from the active list, and appends it to the archive for today. It no longer reopens tasks. Numbers can change after adding, deleting, or completing a task, so check the list before using an index.
+`done` completes the task, removes it from the active list, and appends it to the archive for today. Use `todo undo` to restore the most recent completion. Numbers can change after adding, deleting, or completing a task, so check the list before using an index.
 
 | What you want to do | Command |
 | --- | --- |
@@ -161,6 +161,7 @@ todo
 | Add a task | `todo add "Task description"` |
 | Add an important task | `todo add -i "Task description"` |
 | Complete and archive a task | `todo done 1` |
+| Undo the most recent completion | `todo undo` |
 | Delete one task | `todo delete 1` |
 | Delete **all** tasks, without a confirmation prompt | `todo delete --all` |
 | Synchronize now and wait for completion | `todo sync` |
@@ -276,3 +277,18 @@ Running from source uses the same configuration as the installed tool unless you
 - Fetch or push failures are recorded for `todo status`; subsequent listings also show a short warning. Local task files and any local commits are retained. Fix the problem and use `todo sync`, or make another task change to request a retry. There is no persistent daemon or scheduled retry when no commands are being used.
 - The existing fast-forward-only policy remains. If local and remote branches have both advanced, synchronization reports divergence and leaves reconciliation to you, even if a merge might be possible. There are no automatic merges, rebases, stashes, resets, or force pushes.
 - Requests are persisted before changing task files, and OS-held locks are released if a worker exits or crashes. After restarting the computer or recovering from a worker failure, run `todo sync` to retry pending work. Synchronization failures never require repeating the original add/delete/done command.
+
+## Undo the last completion
+
+`todo done 1` now shows the completed task text and a command you can run immediately:
+
+```text
+Completed: Buy groceries
+Archived in 2026/january/23-01. Undo: todo undo
+```
+
+Run `todo undo` to remove that completion from its daily archive and restore the task, with its original priority, to the active list. Other tasks added or edited afterward are preserved. Undo uses the same local save and background synchronization as other changes; `todo undo --offline` skips requesting a worker.
+
+Only the last successful `done` is remembered, across terminal sessions on this computer. Another `done` replaces it; a successful undo consumes it, so there is no undo history or redo. Add, delete, list, and sync do not replace the remembered completion. Undo records are local Git metadata and are not synchronized between computers.
+
+If that daily archive has changed since the completion (for example, another computer appended an entry), undo refuses to overwrite it. If undo removes the only entry, the empty daily archive file remains. As with completion, do not repeat undo to retry synchronization; use `todo sync`.

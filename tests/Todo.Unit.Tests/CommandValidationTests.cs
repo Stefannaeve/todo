@@ -26,6 +26,8 @@ public class CommandValidationTests
         yield return [new string[] { "unknown" }];
         yield return [new string[] { "2" }];
         yield return [new string[] { "99" }];
+        yield return [new string[] { "undo", "1" }];
+        yield return [new string[] { "undo", "--all" }];
         yield return [new string[] { "sync", "--offline" }];
         yield return [new string[] { "sync", "extra" }];
         yield return [new string[] { "status", "extra" }];
@@ -41,6 +43,8 @@ public class CommandValidationTests
 
     [Theory]
     [InlineData(new string[] { }, Command.List)]
+    [InlineData(new string[] { "undo" }, Command.Undo)]
+    [InlineData(new string[] { "undo", "--offline" }, Command.Undo)]
     [InlineData(new string[] { "sync" }, Command.Sync)]
     [InlineData(new string[] { "sync", "--verbose" }, Command.Sync)]
     [InlineData(new string[] { "status" }, Command.Status)]

@@ -8,5 +8,6 @@ public enum Command
     Done,
     List,
     Sync,
-    Status
+    Status,
+    Undo
 }

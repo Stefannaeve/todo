@@ -11,6 +11,7 @@ public static class ArgumentValidator
         { Command.Done, [ArgumentType.Info, ArgumentType.Verbose, ArgumentType.Offline, ArgumentType.Value] },
         { Command.List, [ArgumentType.Info, ArgumentType.Verbose, ArgumentType.Offline] },
         { Command.Sync, [ArgumentType.Info, ArgumentType.Verbose] },
+        { Command.Undo, [ArgumentType.Info, ArgumentType.Verbose, ArgumentType.Offline] },
         { Command.Status, [ArgumentType.Info, ArgumentType.Verbose] },
     };
 
@@ -21,7 +22,7 @@ public static class ArgumentValidator
     {
         if (!Rules.TryGetValue(command, out List<ArgumentType>? allowed))
         {
-            return "Unknown command. Use add, delete, done, list, sync, or status.";
+            return "Unknown command. Use add, delete, done, list, sync, status, or undo.";
         }
 
         if (command == Command.Done && arguments.Any(argument => argument.ArgumentType == ArgumentType.All))
@@ -35,7 +36,7 @@ public static class ArgumentValidator
         }
 
         List<Argument> values = arguments.Where(argument => argument.ArgumentType == ArgumentType.Value).ToList();
-        if (command is Command.List or Command.Sync or Command.Status)
+        if (command is Command.List or Command.Sync or Command.Status or Command.Undo)
         {
             return null;
         }
@@ -66,6 +67,7 @@ public static class ArgumentValidator
         Command.Delete => "Use: todo delete <index> or todo delete --all",
         Command.Done => "Use: todo done <index>",
         Command.Sync => "Use: todo sync [--verbose]",
+        Command.Undo => "Use: todo undo [--offline]",
         Command.Status => "Use: todo status",
         _ => "Use: todo list [--info] [--verbose]",
     };

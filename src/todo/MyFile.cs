@@ -96,6 +96,19 @@ public class MyFile(string fileName)
         _todoItems.Add(item);
     }
 
+    public TodoItem GetItem(int index)
+    {
+        TodoItem item = _todoItems[index - 1];
+        return new TodoItem { Body = item.Body, Classification = item.Classification, Finished = item.Finished };
+    }
+
+    public void Restore(TodoItem item, int index)
+    {
+        _todoItems.Insert(Math.Clamp(index - 1, 0, _todoItems.Count),
+            new TodoItem { Body = item.Body, Classification = item.Classification, Finished = false });
+        _todoItems = _todoItems.OrderBy(current => current.Classification).ToList();
+    }
+
     public bool Delete(int index)
     {
         if (index < 1 || index > _todoItems.Count)

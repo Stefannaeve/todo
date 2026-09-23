@@ -6,6 +6,7 @@ public static class ArgumentValidator
 {
     private static readonly Dictionary<Command, List<ArgumentType>> Rules = new()
     {
+        { Command.Edit, [ArgumentType.Info, ArgumentType.Verbose, ArgumentType.Offline, ArgumentType.Value] },
         { Command.Add, [ArgumentType.Important, ArgumentType.Info, ArgumentType.Verbose, ArgumentType.Offline, ArgumentType.Value] },
         { Command.Delete, [ArgumentType.All, ArgumentType.Info, ArgumentType.Verbose, ArgumentType.Offline, ArgumentType.Value] },
         { Command.Done, [ArgumentType.Info, ArgumentType.Verbose, ArgumentType.Offline, ArgumentType.Value] },
@@ -22,7 +23,7 @@ public static class ArgumentValidator
     {
         if (!Rules.TryGetValue(command, out List<ArgumentType>? allowed))
         {
-            return "Unknown command. Use add, delete, done, list, sync, status, or undo.";
+            return "Unknown command. Use add, edit, delete, done, list, sync, status, or undo.";
         }
 
         if (command == Command.Done && arguments.Any(argument => argument.ArgumentType == ArgumentType.All))
@@ -38,6 +39,18 @@ public static class ArgumentValidator
         List<Argument> values = arguments.Where(argument => argument.ArgumentType == ArgumentType.Value).ToList();
         if (command is Command.List or Command.Sync or Command.Status or Command.Undo)
         {
+            return null;
+        }
+
+        if (command == Command.Edit)
+        {
+            if (values.Count != 2)
+                return "Expected one task index and one quoted replacement text. Use: todo edit <index> \"new text\"";
+            if (!int.TryParse(values[0].Value, out int editIndex) || editIndex < 1)
+                return "Task index must be a positive whole number. Use: todo edit <index> \"new text\"";
+            string? text = values[1].Value;
+            if (string.IsNullOrWhiteSpace(text) || text.Contains('\r') || text.Contains('\n'))
+                return "Replacement text must be nonblank and on one line. Use: todo edit <index> \"new text\"";
             return null;
         }
 
@@ -63,6 +76,7 @@ public static class ArgumentValidator
 
     private static string Usage(Command command) => command switch
     {
+        Command.Edit => "Use: todo edit <index> \"new text\" [--offline]",
         Command.Add => "Use: todo add [-i] \"task text\"",
         Command.Delete => "Use: todo delete <index> or todo delete --all",
         Command.Done => "Use: todo done <index>",

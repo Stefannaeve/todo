@@ -9,5 +9,6 @@ public enum Command
     List,
     Sync,
     Status,
-    Undo
+    Undo,
+    Edit
 }

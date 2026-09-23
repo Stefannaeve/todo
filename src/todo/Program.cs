@@ -83,7 +83,7 @@ internal static class Program
             string? value = commandArgument.Arguments.FirstOrDefault(argument => argument.ArgumentType == ArgumentType.Value)?.Value;
             bool deleteAll = commandArgument.Arguments.Any(argument => argument.ArgumentType == ArgumentType.All);
             int index = 0;
-            if (commandArgument.Command == Command.Done || (commandArgument.Command == Command.Delete && !deleteAll))
+            if (commandArgument.Command is Command.Done or Command.Edit || (commandArgument.Command == Command.Delete && !deleteAll))
             {
                 if (!int.TryParse(value, out index) || index < 1 || index > file.Count)
                     return Error($"Task {value} does not exist. Use todo list to see available indices.");
@@ -101,6 +101,13 @@ internal static class Program
                         ? Classification.Important : Classification.Regular;
                     file.Append(classification, value!);
                     file.Save();
+                    break;
+                case Command.Edit:
+                    string replacement = commandArgument.Arguments
+                        .Where(argument => argument.ArgumentType == ArgumentType.Value).ElementAt(1).Value!;
+                    file.Edit(index, replacement);
+                    file.Save();
+                    Console.WriteLine($"Updated: {replacement}");
                     break;
                 case Command.Delete:
                     if (deleteAll) file.DeleteAll();

@@ -109,6 +109,15 @@ public class MyFile(string fileName)
         _todoItems = _todoItems.OrderBy(current => current.Classification).ToList();
     }
 
+    public bool Edit(int index, string body)
+    {
+        if (index < 1 || index > _todoItems.Count) return false;
+        if (string.IsNullOrWhiteSpace(body) || body.Contains('\r') || body.Contains('\n'))
+            throw new ArgumentException("Task text must be nonblank and on one line.", nameof(body));
+        _todoItems[index - 1].Body = body;
+        return true;
+    }
+
     public bool Delete(int index)
     {
         if (index < 1 || index > _todoItems.Count)

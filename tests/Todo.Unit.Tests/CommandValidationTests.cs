@@ -26,6 +26,18 @@ public class CommandValidationTests
         yield return [new string[] { "unknown" }];
         yield return [new string[] { "2" }];
         yield return [new string[] { "99" }];
+        yield return [new string[] { "edit" }];
+        yield return [new string[] { "edit", "1" }];
+        yield return [new string[] { "edit", "0", "Text" }];
+        yield return [new string[] { "edit", "-1", "Text" }];
+        yield return [new string[] { "edit", "abc", "Text" }];
+        yield return [new string[] { "edit", "2147483648", "Text" }];
+        yield return [new string[] { "edit", "1", "" }];
+        yield return [new string[] { "edit", "1", "   " }];
+        yield return [new string[] { "edit", "1", "First\nSecond" }];
+        yield return [new string[] { "edit", "1", "First\rSecond" }];
+        yield return [new string[] { "edit", "1", "Text", "Extra" }];
+        yield return [new string[] { "edit", "1", "Text", "-i" }];
         yield return [new string[] { "undo", "1" }];
         yield return [new string[] { "undo", "--all" }];
         yield return [new string[] { "sync", "--offline" }];
@@ -43,6 +55,8 @@ public class CommandValidationTests
 
     [Theory]
     [InlineData(new string[] { }, Command.List)]
+    [InlineData(new string[] { "edit", "1", "New text" }, Command.Edit)]
+    [InlineData(new string[] { "edit", "--offline", "1", "New text", "--verbose" }, Command.Edit)]
     [InlineData(new string[] { "undo" }, Command.Undo)]
     [InlineData(new string[] { "undo", "--offline" }, Command.Undo)]
     [InlineData(new string[] { "sync" }, Command.Sync)]

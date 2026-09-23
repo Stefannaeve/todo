@@ -11,6 +11,7 @@ internal static class Help
         Usage:
           todo                         List local tasks (same as todo list).
           todo add [-i] "task text"     Add one task; -i marks it important.
+          todo edit <index> "text"     Change an active task's text; keep its priority.
           todo list                    Show local task numbers and completion status.
           todo done <index>            Complete a task and move it to its dated archive.
           todo delete <index>          Delete one task.
@@ -32,6 +33,7 @@ internal static class Help
           todo add -i "Finish assignment"
           todo list --offline
           todo done 1
+          todo edit 2 "Buy groceries and milk"
 
         Important tasks appear first. Check the current list before using an index.
         Quote task descriptions containing spaces. Add/delete accept one task at a time.

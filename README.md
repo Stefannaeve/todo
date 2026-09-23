@@ -160,6 +160,7 @@ todo
 | List local tasks | `todo` or `todo list` |
 | Add a task | `todo add "Task description"` |
 | Add an important task | `todo add -i "Task description"` |
+| Change an active task's text | `todo edit 1 "New description"` |
 | Complete and archive a task | `todo done 1` |
 | Undo the most recent completion | `todo undo` |
 | Delete one task | `todo delete 1` |
@@ -267,7 +268,7 @@ Running from source uses the same configuration as the installed tool unless you
 ## Local commands and background synchronization
 
 - `todo`, `todo list`, and `todo status` use local data and never fetch or push. On a fresh install, an empty local list is expected. Remote changes appear after a successful background sync or an explicit `todo sync`.
-- `todo add`, `todo done`, and `todo delete` save locally before returning, then launch a separate background process. It keeps running after the command exits and is detached from the terminal. Closing the terminal does not intentionally cancel it; shutting down the machine stops it, but the saved files and pending request remain.
+- `todo add`, `todo edit`, `todo done`, `todo undo`, and `todo delete` save locally before returning, then launch a separate background process. It keeps running after the command exits and is detached from the terminal. Closing the terminal does not intentionally cancel it; shutting down the machine stops it, but the saved files and pending request remain.
 - The worker waits about half a second to group nearby changes. Only one worker synchronizes a given task repository at a time. Task-file operations use a separate lock, held only during local reads, writes, commits, and fast-forward updates. Fetch and push do not hold that lock, so network latency does not block local commands. A slow local Git hook can still delay local file access.
 - `todo sync` waits for synchronization to finish and returns exit code 1 if it fails. If a running worker services the request successfully, the command reuses that result. Otherwise it performs synchronization itself. It commits pending task/archive changes, fetches the upstream, fast-forwards when possible, and pushes the captured commit. Edits made during network operations remain safe; newly requested changes trigger another pass.
 - `todo status` reports whether a worker is running, whether app changes are pending, the last successful sync time, and the last error. Status uses local Git state; it cannot tell whether the remote has changed without synchronizing. Sync state and lock files live under `.git/todo-sync` (or the worktree's Git metadata directory), not in tracked task files.
@@ -289,6 +290,18 @@ Archived in 2026/january/23-01. Undo: todo undo
 
 Run `todo undo` to remove that completion from its daily archive and restore the task, with its original priority, to the active list. Other tasks added or edited afterward are preserved. Undo uses the same local save and background synchronization as other changes; `todo undo --offline` skips requesting a worker.
 
-Only the last successful `done` is remembered, across terminal sessions on this computer. Another `done` replaces it; a successful undo consumes it, so there is no undo history or redo. Add, delete, list, and sync do not replace the remembered completion. Undo records are local Git metadata and are not synchronized between computers.
+Only the last successful `done` is remembered, across terminal sessions on this computer. Another `done` replaces it; a successful undo consumes it, so there is no undo history or redo. Add, edit, delete, list, and sync do not replace the remembered completion. Undo records are local Git metadata and are not synchronized between computers.
 
 If that daily archive has changed since the completion (for example, another computer appended an entry), undo refuses to overwrite it. If undo removes the only entry, the empty daily archive file remains. As with completion, do not repeat undo to retry synchronization; use `todo sync`.
+
+## Edit a task
+
+Use the number from `todo list` and quote the replacement text:
+
+```sh
+todo edit 1 "Buy groceries and milk"
+```
+
+This updates only the selected active task's text, preserving its priority, position, and completion flag. It saves locally immediately and requests background synchronization. Use `todo edit 1 "New text" --offline` to skip requesting a worker.
+
+The replacement must be one nonblank line. Missing or extra values and invalid indices are rejected without changing the task file. Editing does not change archived tasks or replace the remembered last completion; `todo undo` continues to undo only the last `done`, not the edit.

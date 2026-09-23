@@ -28,6 +28,7 @@ internal static class Program
 
         Git git = new Git(config.TodoPath);
 
+        git.EnsureInitialized();
         git.Pull();
 
         Message.Debug(commandArgument.Command.ToString());

@@ -5,52 +5,77 @@ namespace todo;
 
 public class Git(string repoPath)
 {
-    private void RunProcess(string argument)
+    private (int ExitCode, string Output) RunProcess(params string[] arguments)
     {
-        Process process = new Process();
-
+        using Process process = new();
         process.StartInfo.FileName = "git";
         process.StartInfo.WorkingDirectory = repoPath;
-        process.StartInfo.Arguments = argument;
         process.StartInfo.RedirectStandardOutput = true;
         process.StartInfo.RedirectStandardError = true;
-        process.Start();
-        StreamReader streamReader = process.StandardOutput;
-        string output = streamReader.ReadToEnd();
-        if (Message.InfoEnabled || Message.VerboseEnabled)
+        foreach (string argument in arguments)
         {
-            Console.WriteLine(output);
+            process.StartInfo.ArgumentList.Add(argument);
         }
 
-        process.Close();
+        process.Start();
+        Task<string> output = process.StandardOutput.ReadToEndAsync();
+        Task<string> error = process.StandardError.ReadToEndAsync();
+        process.WaitForExit();
+        Task.WaitAll(output, error);
+
+        if (Message.InfoEnabled || Message.VerboseEnabled)
+        {
+            Console.Write(output.Result);
+        }
+
+        if (process.ExitCode != 0 && !(arguments[0] == "diff" && process.ExitCode == 1))
+        {
+            throw new InvalidOperationException($"git {arguments[0]} failed: {error.Result.Trim()}");
+        }
+
+        return (process.ExitCode, output.Result);
     }
 
-    private void makeProcess() {
-    }
-
-    public void Init()
+    public void EnsureInitialized()
     {
-        RunProcess("init");
+        Directory.CreateDirectory(repoPath);
+        string gitPath = Path.Combine(repoPath, ".git");
+        // Worktrees use a .git file; regular repositories use a directory.
+        if (!Directory.Exists(gitPath) && !File.Exists(gitPath))
+        {
+            Init();
+        }
     }
 
-    public void Clone(string repoToClone)
-    {
-        RunProcess($"clone {repoToClone}");
-    }
+    private bool HasRemote() => !string.IsNullOrWhiteSpace(RunProcess("remote").Output);
+
+    public void Init() => RunProcess("init");
+
+    public void Clone(string repoToClone) => RunProcess("clone", repoToClone);
 
     public void Push(string commitMessage)
     {
-        RunProcess($"commit -a -m \"{commitMessage}\"");
+        // Fresh installations work locally without a Git identity or remote.
+        if (!HasRemote())
+        {
+            return;
+        }
+
+        RunProcess("add", "--", "todo.txt");
+        if (RunProcess("diff", "--cached", "--quiet", "--", "todo.txt").ExitCode == 1)
+        {
+            RunProcess("commit", "-m", commitMessage, "--", "todo.txt");
+        }
         RunProcess("push");
     }
 
     public void Pull()
     {
-        RunProcess("pull");
+        if (HasRemote())
+        {
+            RunProcess("pull");
+        }
     }
 
-    public void Status()
-    {
-        RunProcess("status");
-    }
+    public void Status() => RunProcess("status");
 }

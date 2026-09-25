@@ -1,4 +1,16 @@
-# todo
+```
+ ███████████              █████         
+░█░░░███░░░█             ░░███          
+░   ░███  ░   ██████   ███████   ██████ 
+    ░███     ███░░███ ███░░███  ███░░███
+    ░███    ░███ ░███░███ ░███ ░███ ░███
+    ░███    ░███ ░███░███ ░███ ░███ ░███
+    █████   ░░██████ ░░████████░░██████ 
+   ░░░░░     ░░░░░░   ░░░░░░░░  ░░░░░░  
+```
+
+This application was made with the help of AI, mostly towards the end because I was running out of time. I still wanted to include this disclaimer.
+
 
 A small command-line task manager. Add tasks, mark important ones, check them off, and optionally keep them synchronized through your own Git repository.
 
